@@ -1,31 +1,25 @@
-<?php
-/**
- * Conexão com o banco (PDO).
- *
- * As credenciais NÃO ficam neste arquivo (ele é versionado no Git).
- * Elas vêm de config/database.local.php, que é ignorado pelo Git.
- * Copie config/database.local.php.example para config/database.local.php
- * e preencha com os dados do seu banco.
- */
-
-$localConfig = __DIR__ . '/database.local.php';
-if (!is_file($localConfig)) {
-    http_response_code(500);
-    exit('Configuração ausente: crie config/database.local.php a partir do arquivo .example.');
+﻿<?php
+$candidatos = [
+    "/home/u719183319/config_secreto/database.local.php",
+    __DIR__ . "/database.local.php",
+];
+$cfg = null;
+foreach ($candidatos as $arquivo) {
+    if (is_file($arquivo)) { $cfg = require $arquivo; break; }
 }
-$cfg = require $localConfig;
+if (!$cfg) {
+    http_response_code(500);
+    exit("Configuracao ausente: database.local.php nao encontrado.");
+}
 
 function db(): PDO
 {
     static $pdo = null;
-    if ($pdo instanceof PDO) {
-        return $pdo;
-    }
-
+    if ($pdo instanceof PDO) return $pdo;
     global $cfg;
-    $dsn = 'mysql:host=' . $cfg['host'] . ';dbname=' . $cfg['name'] . ';charset=utf8mb4';
+    $dsn = "mysql:host=" . $cfg["host"] . ";dbname=" . $cfg["name"] . ";charset=utf8mb4";
     try {
-        $pdo = new PDO($dsn, $cfg['user'], $cfg['pass'], [
+        $pdo = new PDO($dsn, $cfg["user"], $cfg["pass"], [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
@@ -33,6 +27,6 @@ function db(): PDO
         return $pdo;
     } catch (PDOException $e) {
         http_response_code(500);
-        exit('Falha ao conectar ao banco. Confira config/database.local.php.');
+        exit("Falha ao conectar ao banco.");
     }
 }
