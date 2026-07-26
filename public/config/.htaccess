@@ -1,0 +1,3 @@
+# Bloqueia todo acesso web à pasta config/
+# (contém database.local.php com credenciais)
+Require all denied

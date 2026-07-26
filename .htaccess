@@ -1,0 +1,8 @@
+﻿RewriteEngine On
+RewriteRule ^(docs|prompts|database|assets|src|\.git)(/|$) - [F,L]
+RewriteRule ^(\.env|\.gitignore|CLAUDE\.md|.*\.sql)$ - [F,L]
+RewriteCond %{REQUEST_URI} ^/public/ [OR]
+RewriteCond %{REQUEST_URI} ^/public$
+RewriteRule ^ - [L]
+RewriteRule ^$ public/ [L]
+RewriteRule ^(.*)$ public/$1 [L]
