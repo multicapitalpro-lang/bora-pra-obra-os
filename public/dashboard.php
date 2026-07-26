@@ -3,12 +3,12 @@ require __DIR__ . '/includes/auth.php'; require __DIR__ . '/config/database.php'
 $pageTitle='Dashboard';
 $pdo=db();
 $stats=[
- 'albuns'=>(int)$pdo->query('SELECT COUNT(*) FROM episodios')->fetchColumn(),
- 'arquivos'=>(int)$pdo->query('SELECT COALESCE(SUM(qtd_arquivos),0) FROM episodios')->fetchColumn(),
- 'publicados'=>(int)$pdo->query("SELECT COUNT(*) FROM episodios WHERE status='Publicado'")->fetchColumn(),
+ 'albuns'=>(int)$pdo->query('SELECT COUNT(*) FROM capitulos')->fetchColumn(),
+ 'arquivos'=>(int)$pdo->query('SELECT COALESCE(SUM(qtd_arquivos),0) FROM capitulos')->fetchColumn(),
+ 'publicados'=>(int)$pdo->query("SELECT COUNT(*) FROM capitulos WHERE status='Publicado'")->fetchColumn(),
  'temporadas'=>(int)$pdo->query('SELECT COUNT(*) FROM temporadas')->fetchColumn(),
 ];
-$recentes=$pdo->query('SELECT e.*,t.nome temporada FROM episodios e LEFT JOIN temporadas t ON t.id=e.temporada_id ORDER BY e.numero DESC LIMIT 8')->fetchAll();
+$recentes=$pdo->query('SELECT e.*,t.nome temporada FROM capitulos e LEFT JOIN temporadas t ON t.id=e.temporada_id ORDER BY e.numero DESC LIMIT 8')->fetchAll();
 require __DIR__.'/includes/header.php';
 ?>
 <div class="row g-3 mb-4">
