@@ -1,12 +1,22 @@
 <?php
 require __DIR__.'/includes/auth.php';require __DIR__.'/config/database.php';
 $pdo=db();$id=(int)($_GET['id']??0);
-$row=['id'=>0,'numero'=>'','titulo'=>'','titulo_publico'=>'','descricao'=>'','tags'=>'','data_gravacao'=>'','qtd_arquivos'=>0,'temporada_id'=>'','etapa'=>'','status'=>'Catalogado','drive_url'=>'','youtube_url'=>'','data_publicacao'=>'','observacoes'=>''];
+$row=['id'=>0,'numero'=>'','titulo'=>'','titulo_publico'=>'','descricao'=>'','tags'=>'','data_gravacao'=>'','qtd_arquivos'=>0,'temporada_id'=>'','etapa'=>'','status'=>'Catalogado','drive_url'=>'','youtube_url'=>'','data_publicacao'=>'','observacoes'=>'','notas_edicao'=>'','producao_checklist'=>''];
 if($id){$st=$pdo->prepare('SELECT * FROM capitulos WHERE id=?');$st->execute([$id]);$row=$st->fetch()?:$row;}
 $temps=$pdo->query('SELECT * FROM temporadas ORDER BY ordem')->fetchAll();
 $pageTitle=$id?'Editar capítulo':'Novo capítulo';require __DIR__.'/includes/header.php';
-// data_publicacao vem como 'YYYY-MM-DD HH:MM:SS'; input datetime-local espera 'YYYY-MM-DDTHH:MM'
 $dtPub = !empty($row['data_publicacao']) ? str_replace(' ','T',substr($row['data_publicacao'],0,16)) : '';
+// Etapas do checklist de produção (chave => rótulo)
+$etapasProd = [
+  'triado'    => 'Material triado',
+  'editado'   => 'Editado',
+  'revisado'  => 'Revisado',
+  'thumb'     => 'Thumbnail pronta',
+  'seo'       => 'SEO preenchido',
+  'derivados' => 'Shorts/Reels feitos',
+];
+$check = [];
+if(!empty($row['producao_checklist'])){ $check = json_decode($row['producao_checklist'], true) ?: []; }
 ?>
 <form method="post" action="capitulo_salvar.php">
 <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
@@ -23,6 +33,23 @@ $dtPub = !empty($row['data_publicacao']) ? str_replace(' ','T',substr($row['data
     <div class="col-md-2"><label class="form-label">Status</label><select class="form-select" name="status"><?php foreach(['Catalogado','Em edição','Pronto','Agendado','Publicado'] as $s): ?><option <?= $row['status']===$s?'selected':'' ?>><?= $s ?></option><?php endforeach; ?></select></div>
     <div class="col-md-6"><label class="form-label">Link do Drive / álbum</label><input class="form-control" type="url" name="drive_url" value="<?= htmlspecialchars($row['drive_url']??'') ?>"></div>
   </div>
+</div>
+
+<div class="panel-card mb-4">
+  <h2 class="h6 text-secondary mb-3"><i class="bi bi-list-check"></i> Produção</h2>
+  <label class="form-label">Checklist</label>
+  <div class="row g-2 mb-3">
+    <?php foreach($etapasProd as $chave=>$rotulo): ?>
+    <div class="col-md-4 col-6">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="check[]" value="<?= $chave ?>" id="chk_<?= $chave ?>" <?= !empty($check[$chave])?'checked':'' ?>>
+        <label class="form-check-label" for="chk_<?= $chave ?>"><?= $rotulo ?></label>
+      </div>
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <label class="form-label">Notas de edição <span class="text-secondary small">(decisões ao assistir o bruto)</span></label>
+  <textarea class="form-control" rows="4" name="notas_edicao" placeholder="Ex.: cortar do min 3, aquele erro do muro vira o gancho, faltou aéreo — pegar do drone..."><?= htmlspecialchars($row['notas_edicao']??'') ?></textarea>
 </div>
 
 <div class="panel-card mb-4">
