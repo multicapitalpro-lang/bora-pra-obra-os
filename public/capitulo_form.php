@@ -82,6 +82,7 @@ document.getElementById('btnIA').addEventListener('click', async function(){
   const f = document.querySelector('form');
   const temporadaSel = f.temporada_id;
   const payload = {
+    numero: f.numero.value,
     titulo: f.titulo.value,
     etapa: f.etapa.value,
     temporada: temporadaSel.options[temporadaSel.selectedIndex] ? temporadaSel.options[temporadaSel.selectedIndex].text : '',

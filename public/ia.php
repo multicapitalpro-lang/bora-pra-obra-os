@@ -18,6 +18,7 @@ if($apiKey===''){
 
 // Dados do capítulo enviados pelo formulário
 $in = json_decode(file_get_contents('php://input'), true) ?: [];
+$numero    = trim((string)($in['numero'] ?? ''));
 $titulo    = trim($in['titulo'] ?? '');
 $etapa     = trim($in['etapa'] ?? '');
 $temporada = trim($in['temporada'] ?? '');
@@ -28,7 +29,9 @@ if($titulo===''){
     echo json_encode(['erro'=>'Informe ao menos o título interno do capítulo antes de gerar.']); exit;
 }
 
+$numFmt = $numero!=='' ? str_pad($numero, 2, '0', STR_PAD_LEFT) : '';
 $contexto = "Título interno: {$titulo}\n";
+if($numFmt!=='') $contexto .= "Número do episódio: {$numFmt}\n";
 if($temporada!=='') $contexto .= "Temporada/etapa da obra: {$temporada}\n";
 if($etapa!=='')     $contexto .= "Etapa específica: {$etapa}\n";
 if($notas!=='')     $contexto .= "Notas de edição: {$notas}\n";
@@ -37,7 +40,7 @@ $system = "Você é editor de conteúdo do canal 'Bora pra Obra', que documenta 
         . "Gere metadados de publicação para YouTube em português do Brasil. "
         . "Tom equilibrado: prático e de obra real, mas chamativo o suficiente para gerar cliques honestos (sem clickbait enganoso). "
         . "Responda ESTRITAMENTE em JSON válido, sem markdown, com as chaves: "
-        . "titulo_publico (string, até ~70 caracteres), descricao (string, 2 a 4 parágrafos curtos, pode terminar com uma linha de hashtags), tags (string, palavras-chave separadas por vírgula, sem #).";
+        . "titulo_publico (string, até ~70 caracteres; comece com o gancho e as palavras-chave de busca e termine com o marcador de série no formato ' #NN' usando o número do episódio com dois dígitos, ex.: 'Muro de arrimo: o erro que quase custou caro #06'), descricao (string, 2 a 4 parágrafos curtos, pode terminar com uma linha de hashtags), tags (string, palavras-chave separadas por vírgula, sem #).";
 
 $user = "Gere os metadados para este capítulo da obra:\n\n{$contexto}";
 
