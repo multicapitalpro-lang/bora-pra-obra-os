@@ -53,7 +53,10 @@ if(!empty($row['producao_checklist'])){ $check = json_decode($row['producao_chec
 </div>
 
 <div class="panel-card mb-4">
-  <h2 class="h6 text-secondary mb-3"><i class="bi bi-youtube"></i> Publicação &amp; SEO</h2>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h6 text-secondary mb-0"><i class="bi bi-youtube"></i> Publicação &amp; SEO</h2>
+    <button type="button" class="btn btn-sm btn-warning" id="btnIA"><i class="bi bi-stars"></i> Gerar com IA</button>
+  </div>
   <div class="row g-3">
     <div class="col-12"><label class="form-label">Título público <span class="text-secondary small">(o que aparece no YouTube)</span></label><input class="form-control" name="titulo_publico" maxlength="255" value="<?= htmlspecialchars($row['titulo_publico']??'') ?>" placeholder="Ex.: Muro de arrimo: o erro que quase custou caro"></div>
     <div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" rows="5" name="descricao" placeholder="Descrição do vídeo para YouTube/Instagram..."><?= htmlspecialchars($row['descricao']??'') ?></textarea></div>
@@ -73,4 +76,42 @@ if(!empty($row['producao_checklist'])){ $check = json_decode($row['producao_chec
   <button class="btn btn-dark">Salvar capítulo</button>
 </div>
 </form>
+<script>
+document.getElementById('btnIA').addEventListener('click', async function(){
+  const btn = this;
+  const f = document.querySelector('form');
+  const temporadaSel = f.temporada_id;
+  const payload = {
+    titulo: f.titulo.value,
+    etapa: f.etapa.value,
+    temporada: temporadaSel.options[temporadaSel.selectedIndex] ? temporadaSel.options[temporadaSel.selectedIndex].text : '',
+    notas: f.notas_edicao.value
+  };
+  if(!payload.titulo.trim()){
+    Swal.fire({icon:'warning',title:'Falta o título',text:'Preencha o título interno do capítulo antes de gerar.'});
+    return;
+  }
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Gerando...';
+  try {
+    const r = await fetch('ia.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if(!r.ok){ throw new Error(data.erro || 'Erro ao gerar'); }
+    if(data.titulo_publico) f.titulo_publico.value = data.titulo_publico;
+    if(data.descricao) f.descricao.value = data.descricao;
+    if(data.tags) f.tags.value = data.tags;
+    Swal.fire({icon:'success',title:'Gerado!',text:'Revise os campos e salve se estiver bom.',timer:2000,showConfirmButton:false});
+  } catch(e){
+    Swal.fire({icon:'error',title:'Erro',text:e.message});
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+});
+</script>
 <?php require __DIR__.'/includes/footer.php'; ?>
