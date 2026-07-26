@@ -1,8 +1,6 @@
 ﻿RewriteEngine On
-RewriteRule ^(docs|prompts|database|assets|src|\.git)(/|$) - [F,L]
-RewriteRule ^(\.env|\.gitignore|CLAUDE\.md|.*\.sql)$ - [F,L]
-RewriteCond %{REQUEST_URI} ^/public/ [OR]
-RewriteCond %{REQUEST_URI} ^/public$
-RewriteRule ^ - [L]
+RewriteRule ^(docs|prompts|database|src|\.git)(/|$) - [F,L]
+RewriteRule ^(\.env|\.gitignore|CLAUDE\.md|README\.md|CHANGELOG\.md|.*\.sql)$ - [F,L]
+RewriteRule ^public/ - [L]
 RewriteRule ^$ public/ [L]
-RewriteRule ^(.*)$ public/$1 [L]
+RewriteRule ^(.+)$ public/$1 [L]
