@@ -1,6 +1,6 @@
 ﻿<?php
 $candidatos = [
-    "/home/u719183319/config_secreto/database.local.php",
+    "/home/u719183319/domains/firebrick-rook-290123.hostingersite.com/config_secreto/database.local.php",
     __DIR__ . "/database.local.php",
 ];
 $cfg = null;
