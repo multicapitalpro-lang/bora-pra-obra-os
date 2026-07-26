@@ -1,0 +1,16 @@
+<?php
+/**
+ * MODELO de configuração local do banco.
+ *
+ * 1. Copie este arquivo para: config/database.local.php
+ * 2. Preencha com os dados reais do seu banco.
+ * 3. NUNCA edite as credenciais reais neste .example — ele é versionado.
+ *    O arquivo database.local.php (sem .example) é ignorado pelo Git.
+ */
+
+return [
+    'host' => 'localhost',
+    'name' => 'SEU_BANCO',
+    'user' => 'SEU_USUARIO',
+    'pass' => 'SUA_SENHA',
+];
