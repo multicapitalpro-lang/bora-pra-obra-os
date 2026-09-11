@@ -49,13 +49,41 @@ return [
 ];
 ```
 
+## Desenvolvimento local (Windows)
+
+Desde 2026-09-11 o repositório também roda localmente, em
+`C:\BoraPraObra\bora-pra-obra-os` (clone deste repo).
+
+- **PHP 8.3 portátil** (sem instalador, não precisa de admin):
+  `C:\BoraPraObra\tools\php\php.exe`. Extensões `pdo_mysql`, `curl`,
+  `mbstring`, `openssl`, `gd`, `zip` já habilitadas no `php.ini` ao
+  lado do executável.
+- **Composer** (`.phar`, roda com o PHP acima):
+  `C:\BoraPraObra\tools\composer.phar`.
+- **Banco**: não há MySQL local instalado. `public/config/database.local.php`
+  (gitignorado) aponta para o próprio banco de produção
+  (`srv1664.hstgr.io`), usando o acesso remoto que já vem liberado na
+  Hostinger para esse usuário. Ou seja: o ambiente local lê/escreve no
+  banco real — cuidado ao testar operações destrutivas.
+- **Segredos fora do repo** (espelhando a estrutura da Hostinger, um
+  nível acima do clone): `C:\BoraPraObra\storage\config\openai.php`,
+  `C:\BoraPraObra\storage\config\worker.php` e
+  `C:\BoraPraObra\storage\credentials\*.json` (Google Drive). O código
+  resolve esses caminhos via `dirname(__DIR__, N)`, então a pasta
+  `storage/` precisa continuar como irmã do clone, não dentro dele.
+- **Subir o servidor local**: rodar `iniciar-local.bat` (na raiz do
+  repo) ou `C:\BoraPraObra\tools\php\php.exe -S localhost:8899` dentro
+  de `public/`. Acessar `http://localhost:8899`.
+
 ## Deploy
 
-1. Trabalhar localmente no VS Code.
+1. Trabalhar localmente (repo em `C:\BoraPraObra\bora-pra-obra-os`).
 2. `git add <arquivos>` (nomear os arquivos; evitar `git add .`).
 3. `git commit -m "..."` e `git push`.
-4. hPanel → Avançado → GIT → Reimplantar (ou configurar webhook para
-   deploy automático a cada push).
+4. hPanel → Avançado → Git → Reimplantar. **Deploy automático a cada
+   push ainda não está configurado** — precisa ser ativado no hPanel
+   (não temos acesso ao login do hPanel, só SSH e MySQL) ou substituído
+   por uma GitHub Action que conecta via SSH.
 
 O deploy apaga do `public_html` o que não vier do Git. Arquivos que
 precisam persistir (como a config do banco) ficam fora do `public_html`.
