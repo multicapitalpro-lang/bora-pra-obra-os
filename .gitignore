@@ -3,6 +3,8 @@
 !.env.example
 config/local.php
 config/database.local.php
+**/config/local.php
+**/config/database.local.php
 *.log
 logs/
 cache/
