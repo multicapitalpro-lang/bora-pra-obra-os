@@ -1,5 +1,18 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14
+
+- `capitulo_roteiros_shorts_ia.php` (gerar roteiros de Shorts com IA):
+  corrigidos dois bugs que faziam o botão falhar sempre. 1) o caminho
+  de `require` do `OpenAIService.php` estava errado (procurava dentro
+  de `public/app/...`, que não existe). 2) a geração de vários
+  roteiros leva 50-70s na OpenAI; nesse tempo o MySQL derrubava a
+  conexão original ("server has gone away") antes de salvar o
+  resultado — agora o script pede uma conexão nova (`db(true)`) depois
+  da chamada de IA, mesmo padrão já usado em `timestamps_ia_resultado.php`.
+  Testado de ponta a ponta no capítulo #1 (3 roteiros gerados com
+  sucesso a partir das transcrições reais).
+
 ## [Não versionado] - 2026-09-11
 
 - Recuperados ~40 arquivos que existiam apenas no servidor Hostinger e

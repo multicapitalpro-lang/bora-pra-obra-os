@@ -42,7 +42,7 @@ require __DIR__ . '/includes/auth.php';
 
 require __DIR__ . '/config/database.php';
 
-require __DIR__ . '/app/AI/OpenAIService.php';
+require dirname(__DIR__) . '/app/AI/OpenAIService.php';
 
 
 /*
@@ -593,6 +593,22 @@ try {
             $arquivosIA
 
         );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RECONECTAR AO BANCO
+    |--------------------------------------------------------------------------
+    |
+    | A chamada acima para a OpenAI pode levar mais de 1 minuto.
+    | Nesse tempo o MySQL pode derrubar a conexao original por
+    | ociosidade ("MySQL server has gone away"). Por isso pedimos
+    | uma conexao nova antes de salvar o resultado.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    $pdo = db(true);
 
 
     /*
