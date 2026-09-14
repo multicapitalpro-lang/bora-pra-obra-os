@@ -1,5 +1,20 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (10)
+
+- **fix: contexto desconectado do gancho + fechamento repetindo a
+  narração.** Usuário reportou roteiro "horrível": o "contexto" saía
+  como um fato solto sem ligação com o gancho (ex.: gancho fala de um
+  cano quebrado, contexto pula pra "o furo foi até 45 metros"), e o
+  "fechamento" só reescrevia com outras palavras o que a narração já
+  tinha contado. Prompt de `gerarRoteirosShorts()` reforçado: instrui
+  a IA a escrever o roteiro inteiro como um texto único primeiro, só
+  depois dividir nos 4 campos; proíbe fechamento repetir a narração
+  (tem que trazer algo novo: reflexão, o que isso significa); exemplo
+  completo das 4 partes conectadas incluído no prompt. Testado no
+  capítulo #4: contexto agora continua a ideia do gancho, fechamento
+  traz ângulo novo em vez de repetir o resultado.
+
 ## [Não versionado] - 2026-09-14 (9)
 
 - **Excluir roteiro de Short**: com roteiros antigos (formato livre)

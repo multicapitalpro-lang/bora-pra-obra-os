@@ -1224,6 +1224,43 @@ Por que está certo: entra direto no fato mais forte (o cano
 estourou), frases curtas, primeira pessoa, soa como alguém
 contando o que aconteceu, não como um texto escrito.
 
+ESCREVA COMO UM TEXTO ÚNICO, DEPOIS DIVIDA NOS CAMPOS:
+
+Antes de preencher gancho/contexto/narracao/fechamento, escreva
+mentalmente o roteiro inteiro como UM texto corrido — a
+transcrição de alguém falando sem parar do início ao fim. Só
+DEPOIS divida esse texto nos 4 campos, cortando nos pontos onde
+haveria uma pausa natural na fala.
+
+"contexto" NUNCA é um fato solto jogado depois do gancho — ele
+continua a MESMA ideia do gancho, como se fosse a frase seguinte
+da mesma respiração. Erro comum: gancho fala de um problema e
+contexto pula pra um dado técnico desconectado (ex.: profundidade
+do furo) sem ligar um com o outro.
+
+"fechamento" NUNCA repete com outras palavras o que "narracao" já
+contou. Se a narração já disse "no fim a água saiu limpa e
+fechamos no mesmo dia", o fechamento não pode dizer de novo "a
+água ficou clarinha, problema resolvido". O fechamento precisa
+trazer algo NOVO: o que esse imprevisto significa, uma reflexão
+rápida, ou o gancho pro próximo passo.
+
+EXEMPLO COMPLETO (as 4 partes conectadas, sem repetir):
+
+gancho: "Um cano estourou bem no meio da perfuração do poço."
+contexto: "A gente tava quase terminando, faltava só a limpeza
+final."
+narracao: "Só que com o cano quebrando, tive que resolver na
+hora: puxamos a mangueira pro fundo, tiramos o barro com a
+bombinha e instalamos a bomba principal. Em poucas horas a água
+já saiu limpa."
+fechamento: "Deu mais trabalho do que devia, mas fechamos no
+mesmo dia — e é esse tipo de imprevisto que ninguém mostra, só
+quem passa por isso mesmo."
+
+Note que fechamento não repete "água saiu limpa" — ele reflete
+sobre o imprevisto em vez de recontar o resultado.
+
 REGRAS DE NARRAÇÃO:
 
 - Frases curtas. Prefira 2-3 frases curtas a 1 frase longa.
