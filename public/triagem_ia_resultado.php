@@ -688,6 +688,22 @@ try {
 
     /*
     |--------------------------------------------------------------------------
+    | RECONECTAR AO BANCO
+    |--------------------------------------------------------------------------
+    |
+    | analisarBrutoTriagem() acima pode levar dezenas de segundos.
+    | Nesse tempo o MySQL pode encerrar a conexao original por
+    | ociosidade ("MySQL server has gone away"). Pedimos uma conexao
+    | nova antes de salvar o resultado.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    $pdo = db(true);
+
+
+    /*
+    |--------------------------------------------------------------------------
     | SALVAR
     |--------------------------------------------------------------------------
     */

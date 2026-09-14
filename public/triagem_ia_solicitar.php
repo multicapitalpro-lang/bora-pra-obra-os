@@ -103,7 +103,11 @@ try {
     |
     | - nao_analisado → entra na fila
     | - erro          → pode tentar novamente
-    | - processando   → não duplicamos
+    | - processando   → não duplicamos, EXCETO se travado há mais de
+    |                    30 minutos (o worker processou mas o envio do
+    |                    resultado falhou por timeout do servidor,
+    |                    ex.: 504 -- sem isso o arquivo ficaria preso
+    |                    em "processando" pra sempre)
     | - concluido     → preservamos
     |
     |--------------------------------------------------------------------------
@@ -122,9 +126,12 @@ try {
               AND ativo = 1
               AND drive_file_id IS NOT NULL
               AND drive_file_id <> ""
-              AND ia_status IN (
-                    "nao_analisado",
-                    "erro"
+              AND (
+                    ia_status IN ("nao_analisado", "erro")
+                    OR (
+                        ia_status = "processando"
+                        AND ia_processamento_inicio_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+                    )
               )
             ORDER BY ordem ASC, id ASC
             '
@@ -245,9 +252,12 @@ try {
                 ia_erro = NULL
             WHERE id = ?
               AND capitulo_id = ?
-              AND ia_status IN (
-                    "nao_analisado",
-                    "erro"
+              AND (
+                    ia_status IN ("nao_analisado", "erro")
+                    OR (
+                        ia_status = "processando"
+                        AND ia_processamento_inicio_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+                    )
               )
             '
         );

@@ -1,5 +1,24 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (12)
+
+- **fix: bruto travado em "processando" pra sempre depois de um 504
+  do worker.** Visto ao vivo hoje: o worker processou um vídeo
+  (download + transcrição + análise), mas o envio do resultado de
+  volta (`triagem_ia_resultado.php`) caiu num 504 do servidor. O
+  arquivo ficou marcado "processando" e nunca mais entrava na fila de
+  novo (nem "Analisar brutos com IA" pegava ele, só re-enfileira
+  nao_analisado/erro). Corrigido em duas frentes:
+  - `triagem_ia_resultado.php` agora pede uma conexão nova ao MySQL
+    (`db(true)`) depois da chamada de IA, mesmo padrão já aplicado
+    nos Shorts — evita "MySQL server has gone away" na hora de salvar.
+  - `triagem_ia_solicitar.php`: brutos travados em "processando" há
+    mais de 30 minutos agora voltam pra fila sozinhos (antes só
+    nao_analisado/erro eram re-enfileirados). Autorrecuperação sem
+    precisar de intervenção manual da próxima vez.
+  Arquivo travado de hoje (GX010053.MP4, capítulo #4) já foi
+  destravado manualmente e reenviado pra fila.
+
 ## [Não versionado] - 2026-09-14 (11)
 
 - **"Gerar os N restantes de uma vez"**: novo botão no passo 3 do
