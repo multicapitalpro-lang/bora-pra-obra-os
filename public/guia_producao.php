@@ -200,8 +200,14 @@ require __DIR__ . '/includes/header.php';
     .passo-numero.ok { background: #198754; color: #fff; }
     .passo-numero.atual { background: #111315; color: #fff; }
     .passo-titulo { font-weight: 600; }
-    .roteiro-mini { border: 1px solid var(--bs-border-color); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+    .roteiro-mini { border: 1px solid var(--bs-border-color); border-radius: 8px; padding: 10px 12px; }
     .roteiro-mini.selecionado { border-color: #111315; background: #f8f9fa; }
+    .btn-excluir-roteiro {
+        position: absolute; top: 6px; right: 6px; z-index: 2;
+        border: none; background: transparent; color: #adb5bd;
+        padding: 2px 6px; border-radius: 4px; line-height: 1;
+    }
+    .btn-excluir-roteiro:hover { color: #dc3545; background: #f8d7da; }
 </style>
 
 <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
@@ -319,17 +325,20 @@ require __DIR__ . '/includes/header.php';
         <div class="row g-2">
             <?php foreach ($roteiros as $r): ?>
                 <div class="col-md-6">
-                    <a class="text-decoration-none text-reset" href="?capitulo_id=<?= $capituloId ?>&short_id=<?= (int) $r['id'] ?>#passo4">
-                        <div class="roteiro-mini <?= (int) $r['id'] === $shortId ? 'selecionado' : '' ?>">
-                            <div class="d-flex justify-content-between">
+                    <div class="roteiro-mini position-relative <?= (int) $r['id'] === $shortId ? 'selecionado' : '' ?>">
+                        <button type="button" class="btn-excluir-roteiro" title="Excluir roteiro" data-short-id="<?= (int) $r['id'] ?>">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <a class="text-decoration-none text-reset d-block" href="?capitulo_id=<?= $capituloId ?>&short_id=<?= (int) $r['id'] ?>#passo4">
+                            <div class="d-flex justify-content-between pe-4">
                                 <strong class="small"><?= htmlspecialchars($r['titulo']) ?></strong>
                                 <span class="badge text-bg-light border"><?= (int) $r['duracao_alvo_segundos'] ?>s</span>
                             </div>
                             <div class="small text-secondary mt-1">
                                 narração: <?= htmlspecialchars($r['narracao_status'] ?: 'sem_narracao') ?>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -439,6 +448,38 @@ require __DIR__ . '/includes/header.php';
 <script>
 const capituloId = <?= $capituloId ?>;
 const shortId = <?= $shortId ?: 'null' ?>;
+
+document.querySelectorAll('.btn-excluir-roteiro').forEach(function (botao) {
+    botao.addEventListener('click', async function (evento) {
+        evento.preventDefault();
+        evento.stopPropagation();
+
+        if (!confirm('Excluir este roteiro de Short? Isso apaga também a narração e as sugestões de corte dele, se houver.')) {
+            return;
+        }
+
+        const idParaExcluir = this.dataset.shortId;
+        this.disabled = true;
+
+        const dados = new FormData();
+        dados.append('short_roteiro_id', idParaExcluir);
+
+        try {
+            const resp = await fetch('short_roteiro_excluir.php', { method: 'POST', body: dados });
+            const json = await resp.json();
+            if (!resp.ok || !json.success) throw new Error(json.message || 'Falha ao excluir.');
+
+            if (String(shortId) === String(idParaExcluir)) {
+                window.location.href = '?capitulo_id=' + capituloId;
+            } else {
+                window.location.reload();
+            }
+        } catch (e) {
+            alert('Não foi possível excluir: ' + e.message);
+            this.disabled = false;
+        }
+    });
+});
 
 const btnEnfileirar = document.getElementById('btnEnfileirar');
 if (btnEnfileirar) {

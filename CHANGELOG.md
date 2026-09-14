@@ -1,5 +1,14 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (9)
+
+- **Excluir roteiro de Short**: com roteiros antigos (formato livre)
+  e novos (5 tipos fixos) misturados no mesmo capítulo, ficou difícil
+  saber qual é qual. Adicionado botão de lixeira em cada card do
+  passo 3 do Guia de Produção — apaga o roteiro (e a narração/cortes
+  sugeridos dele, se houver, via `ON DELETE CASCADE`) depois de
+  confirmar. Novo endpoint `short_roteiro_excluir.php`.
+
 ## [Não versionado] - 2026-09-14 (8)
 
 - **fix: roteiro de Short saía formal demais e com anotações de
