@@ -1,5 +1,17 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (3)
+
+- **`guia_producao.php`** (novo, no menu como "Guia de Produção"): uma
+  única página em formato de assistente que junta todo o caminho —
+  escolher capítulo, checar transcrição dos brutos, triagem, gerar
+  roteiros de Shorts, gravar/subir a narração, pedir a sugestão de
+  corte e aprovar — com 6 passos numerados, cada um mostrando se está
+  pendente, em andamento ou concluído, sem precisar navegar entre
+  páginas diferentes. Reaproveita os mesmos endpoints já testados
+  (`capitulo_roteiros_shorts_ia.php`, `short_narracao_upload.php`,
+  `short_corte_sugerir_ia.php`, `short_corte_aprovar.php`).
+
 ## [Não versionado] - 2026-09-14 (2)
 
 - **Narração própria → sugestão de corte (Shorts)**: novo fluxo pra

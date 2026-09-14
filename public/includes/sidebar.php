@@ -1,5 +1,6 @@
 <?php
 $items = [
+ ['guia_producao.php','bi-signpost-split','Guia de Produção'],
  ['dashboard.php','bi-speedometer2','Dashboard'],
  ['catalogo.php','bi-collection-play','Catálogo de Conteúdo'],
  ['temporadas.php','bi-layers','Temporadas'],
