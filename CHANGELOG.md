@@ -1,5 +1,20 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (5)
+
+- **fix: "roteiro pra ler" mostrava só um pedaço do Short.**
+  `guia_producao.php` e `short_narracao.php` exibiam apenas o campo
+  `roteiro_narracao` (só o bloco de execução) como texto pra narrar —
+  por isso um Short com alvo de 50s aparecia com um texto de ~10s.
+  Corrigido: agora mostram abertura (`bloco_2_assunto`) + meio
+  (`roteiro_narracao`) + fechamento (`bloco_5_fechamento`)
+  concatenados, que é o que realmente é narrado (vinheta e CTA entram
+  depois, os blocos de custo são placeholder).
+- `guia_producao.php`: passos 3 e 5, quando bloqueados, agora mostram
+  o motivo por escrito (ex.: "nenhum bruto transcrito ainda") em vez
+  de só ficarem esmaecidos — reduz a confusão de "por que esse
+  capítulo deixa e o outro não".
+
 ## [Não versionado] - 2026-09-14 (4)
 
 - **fix: 504 (timeout) ao gerar roteiros de Shorts em capítulos grandes.**

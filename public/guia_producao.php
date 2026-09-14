@@ -59,7 +59,8 @@ $totalTriados = (int) $capituloAtual['total_triados'];
 
 $stmtRoteiros = $pdo->prepare(
     '
-    SELECT id, titulo, tema, duracao_alvo_segundos, narracao_status, roteiro_narracao
+    SELECT id, titulo, tema, duracao_alvo_segundos, narracao_status, roteiro_narracao,
+           bloco_2_assunto, bloco_5_fechamento
     FROM capitulo_short_roteiros
     WHERE capitulo_id = ?
     ORDER BY id ASC
@@ -76,6 +77,31 @@ foreach ($roteiros as $r) {
         $shortAtual = $r;
         break;
     }
+}
+
+/*
+|--------------------------------------------------------------------------
+| TEXTO COMPLETO PRA NARRAR
+|--------------------------------------------------------------------------
+|
+| roteiro_narracao guarda só o trecho do meio (bloco 4 - execução).
+| O que a pessoa realmente fala no vídeo é abertura (bloco 2) + meio
+| (roteiro_narracao) + fechamento (bloco 5) -- vinheta e CTA não
+| entram na narração (são inseridos depois) e os blocos de custo são
+| só um placeholder até o valor real existir no app.
+|--------------------------------------------------------------------------
+*/
+
+$textoParaNarrar = '';
+
+if ($shortAtual) {
+    $partes = array_filter([
+        trim((string) ($shortAtual['bloco_2_assunto'] ?? '')),
+        trim((string) ($shortAtual['roteiro_narracao'] ?? '')),
+        trim((string) ($shortAtual['bloco_5_fechamento'] ?? '')),
+    ], fn($p) => $p !== '');
+
+    $textoParaNarrar = implode("\n\n", $partes);
 }
 
 /*
@@ -228,6 +254,14 @@ require __DIR__ . '/includes/header.php';
         <div class="passo-titulo">Gerar roteiros de Shorts</div>
     </div>
 
+    <?php if ($totalTranscritos === 0): ?>
+        <div class="alert alert-secondary small mb-3">
+            <i class="bi bi-lock"></i>
+            Bloqueado: este capítulo ainda não tem nenhum bruto transcrito (passo 1 acima).
+            A IA precisa da transcrição pra saber o que está sendo mostrado em cada vídeo.
+        </div>
+    <?php endif; ?>
+
     <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>" <?= count($roteiros) >= 5 ? 'disabled' : '' ?>>
         <i class="bi bi-stars"></i> <?= $roteiros ? 'Gerar mais um roteiro' : 'Gerar primeiro roteiro' ?> com IA
     </button>
@@ -269,8 +303,11 @@ require __DIR__ . '/includes/header.php';
 
     <?php if ($shortAtual): ?>
         <div class="border rounded p-2 small mb-3 bg-body-tertiary">
-            <div class="text-secondary mb-1">Roteiro pra ler:</div>
-            <?= nl2br(htmlspecialchars((string) $shortAtual['roteiro_narracao'])) ?>
+            <div class="text-secondary mb-1">
+                Roteiro pra ler (abertura + meio + fechamento —
+                alvo de <?= (int) ($shortAtual['duracao_alvo_segundos'] ?? 0) ?>s):
+            </div>
+            <?= nl2br(htmlspecialchars($textoParaNarrar)) ?>
         </div>
 
         <div class="input-group mb-2" style="max-width:520px">
@@ -299,6 +336,12 @@ require __DIR__ . '/includes/header.php';
         </div>
         <div class="passo-titulo">Sugestão de corte</div>
     </div>
+
+    <?php if (!$passo4Ok): ?>
+        <div class="alert alert-secondary small mb-2">
+            <i class="bi bi-lock"></i> Bloqueado: envie sua narração no passo 4 primeiro.
+        </div>
+    <?php endif; ?>
 
     <button class="btn btn-outline-dark btn-sm mb-2" id="btnSugerir">
         <i class="bi bi-magic"></i> Sugerir cortes com IA

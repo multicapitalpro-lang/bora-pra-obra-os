@@ -57,6 +57,19 @@ $stmtBrutos = $pdo->prepare(
 $stmtBrutos->execute([$short['capitulo_id']]);
 $brutosDisponiveis = $stmtBrutos->fetchAll();
 
+/*
+| roteiro_narracao guarda só o trecho do meio (execução). O que a
+| pessoa fala de fato é abertura (bloco 2) + meio + fechamento
+| (bloco 5) -- vinheta e CTA entram depois, os blocos de custo são
+| placeholder até o valor real existir no app.
+*/
+$partesNarracao = array_filter([
+    trim((string) ($short['bloco_2_assunto'] ?? '')),
+    trim((string) ($short['roteiro_narracao'] ?? '')),
+    trim((string) ($short['bloco_5_fechamento'] ?? '')),
+], fn($p) => $p !== '');
+$textoParaNarrar = implode("\n\n", $partesNarracao);
+
 $pageTitle = 'Narração — ' . $short['titulo'];
 require __DIR__ . '/includes/header.php';
 ?>
@@ -78,9 +91,17 @@ require __DIR__ . '/includes/header.php';
 <div class="panel-card mb-4">
     <h3 class="h6">1. Narração própria</h3>
     <p class="text-secondary small">
-        Grave (Audacity ou similar) você lendo o roteiro deste Short e envie o áudio aqui.
+        Grave (Audacity ou similar) você lendo o roteiro abaixo e envie o áudio aqui.
         Formatos aceitos: mp3, wav, m4a, ogg, webm — até 25 MB.
     </p>
+
+    <div class="border rounded p-2 small mb-3 bg-body-tertiary">
+        <div class="text-secondary mb-1">
+            Roteiro pra ler (abertura + meio + fechamento —
+            alvo de <?= (int) ($short['duracao_alvo_segundos'] ?? 0) ?>s):
+        </div>
+        <?= nl2br(htmlspecialchars($textoParaNarrar)) ?>
+    </div>
 
     <div class="input-group mb-2" style="max-width:520px">
         <input type="file" id="input-audio" class="form-control" accept="audio/*">
