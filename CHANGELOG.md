@@ -1,5 +1,27 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (2)
+
+- **Narração própria → sugestão de corte (Shorts)**: novo fluxo pra
+  reduzir o tempo de edição. Em cada Short, o usuário sobe o áudio da
+  própria narração (`short_narracao.php`); a IA transcreve com
+  timestamp por trecho (`OpenAIService::transcreverAudio`, Whisper) e
+  sugere qual bruto do capítulo combina com cada trecho, citando o
+  trecho da transcrição que justifica a escolha
+  (`OpenAIService::sugerirCortesNarracao`). A sugestão é sempre por
+  ARQUIVO, não por timestamp exato — os brutos ainda não têm
+  transcrição segmentada. O usuário revisa e aprova cada corte antes
+  de editar. Novos endpoints: `short_narracao_upload.php`,
+  `short_corte_sugerir_ia.php`, `short_corte_aprovar.php`. Testado de
+  ponta a ponta (upload, transcrição, casamento e aprovação).
+- **`capitulo_detalhes.php`**: a lista de roteiros de Shorts gerados
+  (`listaRoteirosShorts`) estava com um placeholder fixo de "nenhum
+  roteiro gerado" que nunca era substituído por dados reais — mesmo
+  depois de gerar roteiros com sucesso, eles ficavam invisíveis no
+  painel (só existiam no banco). Agora a lista busca os roteiros do
+  capítulo e mostra um card por Short, com link para a nova página de
+  narração/corte.
+
 ## [Não versionado] - 2026-09-14
 
 - `capitulo_roteiros_shorts_ia.php` (gerar roteiros de Shorts com IA):

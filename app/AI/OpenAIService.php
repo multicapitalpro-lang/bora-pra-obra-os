@@ -1418,6 +1418,467 @@ PROMPT;
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSCREVER ÁUDIO (narração própria dos Shorts)
+    |--------------------------------------------------------------------------
+    |
+    | Diferente do request() principal (JSON), a API de transcrição
+    | espera multipart/form-data com o arquivo de áudio. Usamos
+    | whisper-1 com response_format=verbose_json para obter os
+    | segmentos com timestamp — a narração é curta (25-60s), então
+    | vem rápido e o whisper-1 já entrega isso pronto.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    public function transcreverAudio(
+        string $caminhoArquivo
+    ): array {
+
+        if (!is_file($caminhoArquivo)) {
+
+            throw new RuntimeException(
+                'Arquivo de áudio não encontrado.'
+            );
+        }
+
+
+        if (!function_exists('curl_init')) {
+
+            throw new RuntimeException(
+                'A extensão cURL do PHP não está disponível neste servidor.'
+            );
+        }
+
+
+        $curl =
+            curl_init(
+                'https://api.openai.com/v1/audio/transcriptions'
+            );
+
+
+        curl_setopt_array(
+            $curl,
+            [
+
+                CURLOPT_POST =>
+                    true,
+
+                CURLOPT_RETURNTRANSFER =>
+                    true,
+
+                CURLOPT_CONNECTTIMEOUT =>
+                    20,
+
+                CURLOPT_TIMEOUT =>
+                    120,
+
+                CURLOPT_HTTPHEADER => [
+
+                    'Authorization: Bearer '
+                    .
+                    $this->apiKey,
+
+                ],
+
+                CURLOPT_POSTFIELDS => [
+
+                    'file' =>
+                        new CURLFile(
+                            $caminhoArquivo
+                        ),
+
+                    'model' =>
+                        'whisper-1',
+
+                    'language' =>
+                        'pt',
+
+                    'response_format' =>
+                        'verbose_json',
+
+                ],
+
+            ]
+        );
+
+
+        $resposta =
+            curl_exec($curl);
+
+
+        $curlErro =
+            curl_error($curl);
+
+
+        $httpCode =
+            (int) curl_getinfo(
+                $curl,
+                CURLINFO_HTTP_CODE
+            );
+
+
+        curl_close($curl);
+
+
+        if ($resposta === false) {
+
+            throw new RuntimeException(
+                'Erro de comunicação com a OpenAI (transcrição): '
+                .
+                $curlErro
+            );
+        }
+
+
+        $dados =
+            json_decode(
+                $resposta,
+                true
+            );
+
+
+        if ($httpCode >= 400) {
+
+            throw new RuntimeException(
+                'OpenAI recusou a transcrição: '
+                .
+                (
+                    $dados['error']['message']
+                    ?? $resposta
+                )
+            );
+        }
+
+
+        $segmentos = [];
+
+
+        foreach (
+            $dados['segments']
+            ?? []
+            as $segmento
+        ) {
+
+            $segmentos[] = [
+
+                'inicio_ms' =>
+                    (int) round(
+                        (
+                            (float) (
+                                $segmento['start']
+                                ?? 0
+                            )
+                        )
+                        * 1000
+                    ),
+
+                'fim_ms' =>
+                    (int) round(
+                        (
+                            (float) (
+                                $segmento['end']
+                                ?? 0
+                            )
+                        )
+                        * 1000
+                    ),
+
+                'texto' =>
+                    trim(
+                        (string) (
+                            $segmento['text']
+                            ?? ''
+                        )
+                    ),
+
+            ];
+        }
+
+
+        return [
+
+            'texto' =>
+                trim(
+                    (string) (
+                        $dados['text']
+                        ?? ''
+                    )
+                ),
+
+            'segmentos' =>
+                $segmentos,
+
+        ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUGERIR CORTES A PARTIR DA NARRAÇÃO PRÓPRIA
+    |--------------------------------------------------------------------------
+    |
+    | Recebe os segmentos (com timestamp) da narração que o usuário
+    | gravou por conta própria, e a lista de brutos do capítulo com
+    | suas transcrições completas. Para cada segmento da narração,
+    | a IA aponta qual bruto melhor combina e cita o trecho da
+    | transcrição que justifica a escolha.
+    |
+    | IMPORTANTE: os brutos não têm timestamp por trecho (a
+    | transcrição deles é só o texto corrido), então a sugestão é
+    | por ARQUIVO, não por segundo exato dentro dele. O usuário ainda
+    | precisa achar o ponto certo ao editar.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    public function sugerirCortesNarracao(
+        array $segmentosNarracao,
+        array $brutos
+    ): array {
+
+        if (empty($segmentosNarracao)) {
+
+            throw new InvalidArgumentException(
+                'Nenhum segmento de narração informado.'
+            );
+        }
+
+
+        if (empty($brutos)) {
+
+            throw new InvalidArgumentException(
+                'Nenhum bruto com transcrição disponível neste capítulo.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTAR NARRAÇÃO
+        |--------------------------------------------------------------------------
+        */
+
+        $textoNarracao = '';
+
+
+        foreach (
+            $segmentosNarracao
+            as $indice => $segmento
+        ) {
+
+            $textoNarracao .=
+                "[{$indice}] ("
+                .
+                $segmento['inicio_ms']
+                .
+                'ms - '
+                .
+                $segmento['fim_ms']
+                .
+                "ms)\n"
+                .
+                trim(
+                    (string) (
+                        $segmento['texto']
+                        ?? ''
+                    )
+                )
+                .
+                "\n\n";
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTAR BRUTOS
+        |--------------------------------------------------------------------------
+        */
+
+        $textoBrutos = '';
+
+
+        foreach (
+            $brutos
+            as $bruto
+        ) {
+
+            $textoBrutos .=
+                'ARQUIVO #'
+                .
+                $bruto['id']
+                .
+                ' ('
+                .
+                (
+                    $bruto['nome_arquivo']
+                    ?? ''
+                )
+                .
+                ') — tipo: '
+                .
+                (
+                    $bruto['tipo']
+                    ?: 'não definido'
+                )
+                .
+                "\nTranscrição: "
+                .
+                trim(
+                    (string) (
+                        $bruto['transcricao']
+                        ?? ''
+                    )
+                )
+                .
+                "\n\n";
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | INSTRUÇÃO
+        |--------------------------------------------------------------------------
+        */
+
+        $instrucao = <<<PROMPT
+Você é o editor de vídeo do canal Bora pra Obra.
+
+O usuário gravou, com a própria voz, a narração final de um Short.
+Ela já está transcrita e dividida em segmentos com timestamp.
+
+Sua tarefa: para cada segmento da narração, indicar qual ARQUIVO
+bruto (da lista abaixo) melhor combina visualmente com o que está
+sendo dito naquele momento, e citar o trecho da transcrição do bruto
+que justifica a escolha.
+
+REGRAS:
+
+- Baseie-se SOMENTE nas transcrições fornecidas. Nunca invente o que
+  aparece na imagem de um bruto além do que a transcrição sugere.
+- Se nenhum bruto combinar bem com um segmento, retorne arquivo_id
+  como null e explique isso em vez de forçar uma escolha ruim.
+- Você está sugerindo o ARQUIVO certo, não o timestamp exato dentro
+  dele — isso o usuário ainda ajusta na edição.
+
+============================================================
+SEGMENTOS DA NARRAÇÃO
+============================================================
+
+{$textoNarracao}
+============================================================
+BRUTOS DISPONÍVEIS
+============================================================
+
+{$textoBrutos}
+PROMPT;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SCHEMA
+        |--------------------------------------------------------------------------
+        */
+
+        $schema = [
+
+            'type' =>
+                'object',
+
+            'additionalProperties' =>
+                false,
+
+            'properties' => [
+
+                'cortes' => [
+
+                    'type' =>
+                        'array',
+
+                    'items' => [
+
+                        'type' =>
+                            'object',
+
+                        'additionalProperties' =>
+                            false,
+
+                        'properties' => [
+
+                            'segmento_index' => [
+                                'type' => 'integer'
+                            ],
+
+                            'arquivo_id' => [
+                                'type' => ['integer', 'null']
+                            ],
+
+                            'trecho_transcricao' => [
+                                'type' => 'string'
+                            ],
+
+                            'justificativa' => [
+                                'type' => 'string'
+                            ],
+
+                        ],
+
+                        'required' => [
+
+                            'segmento_index',
+                            'arquivo_id',
+                            'trecho_transcricao',
+                            'justificativa',
+
+                        ],
+
+                    ],
+
+                ],
+
+            ],
+
+            'required' => [
+
+                'cortes'
+
+            ],
+
+        ];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHAMAR IA
+        |--------------------------------------------------------------------------
+        */
+
+        $inicio =
+            microtime(true);
+
+
+        $resultado =
+            $this->responderEstruturado(
+                $instrucao,
+                'cortes_narracao',
+                $schema
+            );
+
+
+        $resultado['tempo_segundos'] =
+            round(
+                microtime(true)
+                -
+                $inicio,
+                2
+            );
+
+
+        return $resultado;
+    }
+
+
     public function testar(): array
     {
         $inicio =

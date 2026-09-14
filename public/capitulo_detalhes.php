@@ -7698,9 +7698,25 @@ require __DIR__ . '/includes/header.php';
                  RESULTADOS
             ====================================================== -->
 
+            <?php
+            $stmtShortsCap = $pdo->prepare(
+                '
+                SELECT id, titulo, tema, duracao_alvo_segundos,
+                       status, narracao_status, roteiro_narracao
+                FROM capitulo_short_roteiros
+                WHERE capitulo_id = ?
+                ORDER BY id ASC
+                '
+            );
+            $stmtShortsCap->execute([(int) $capitulo['id']]);
+            $shortsDoCapitulo = $stmtShortsCap->fetchAll(PDO::FETCH_ASSOC);
+            ?>
+
             <div
                 id="listaRoteirosShorts"
             >
+
+                <?php if (!$shortsDoCapitulo): ?>
 
                 <div class="border rounded p-4 text-center">
 
@@ -7731,6 +7747,39 @@ require __DIR__ . '/includes/header.php';
                     </div>
 
                 </div>
+
+                <?php else: ?>
+
+                <div class="row g-3">
+                    <?php foreach ($shortsDoCapitulo as $s): ?>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <strong class="small"><?= htmlspecialchars($s['titulo']) ?></strong>
+                                    <span class="badge text-bg-light border text-nowrap">
+                                        <?= (int) ($s['duracao_alvo_segundos'] ?? 0) ?>s
+                                    </span>
+                                </div>
+                                <?php if (!empty($s['tema'])): ?>
+                                    <div class="small text-secondary mt-1"><?= htmlspecialchars($s['tema']) ?></div>
+                                <?php endif; ?>
+                                <p class="small mt-2 mb-2 flex-grow-1">
+                                    <?= htmlspecialchars(mb_substr((string) $s['roteiro_narracao'], 0, 140)) ?><?= mb_strlen((string) $s['roteiro_narracao']) > 140 ? '…' : '' ?>
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge text-bg-light border">
+                                        narração: <?= htmlspecialchars($s['narracao_status'] ?: 'sem_narracao') ?>
+                                    </span>
+                                    <a href="short_narracao.php?id=<?= (int) $s['id'] ?>" class="btn btn-sm btn-outline-dark">
+                                        Narração e corte
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <?php endif; ?>
 
             </div>
 
