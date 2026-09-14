@@ -310,6 +310,11 @@ require __DIR__ . '/includes/header.php';
     <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>" <?= $todosTiposUsados ? 'disabled' : '' ?>>
         <i class="bi bi-stars"></i> <?= $roteiros ? 'Gerar mais um roteiro' : 'Gerar primeiro roteiro' ?> com IA
     </button>
+    <?php if (!$todosTiposUsados && count($tiposCanonicosChaves) - count($tiposUsados) > 1): ?>
+        <button class="btn btn-outline-dark btn-sm mb-3 ms-1" id="btnGerarTodos" data-capitulo-id="<?= $capituloId ?>">
+            <i class="bi bi-stars"></i> Gerar os <?= count($tiposCanonicosChaves) - count($tiposUsados) ?> restantes de uma vez
+        </button>
+    <?php endif; ?>
     <?php if ($todosTiposUsados): ?>
         <div class="small text-secondary mb-2">Os 5 tipos de Short do template já foram gerados neste capítulo.</div>
     <?php else: ?>
@@ -502,23 +507,54 @@ if (btnEnfileirar) {
     });
 }
 
+async function gerarUmRoteiro() {
+    const dados = new FormData();
+    dados.append('capitulo_id', capituloId);
+    const resp = await fetch('capitulo_roteiros_shorts_ia.php', { method: 'POST', body: dados });
+    const json = await resp.json();
+    if (!resp.ok || !json.success) throw new Error(json.message || 'Falha ao gerar.');
+    return json;
+}
+
 const btnGerar = document.getElementById('btnGerarRoteiros');
 if (btnGerar) {
     btnGerar.addEventListener('click', async function () {
         const out = document.getElementById('resultadoGerarRoteiros');
         this.disabled = true;
-        out.innerHTML = '<span class="text-secondary">Analisando brutos e gerando roteiros...</span>';
+        out.innerHTML = '<span class="text-secondary">Analisando brutos e gerando roteiro...</span>';
         try {
-            const dados = new FormData();
-            dados.append('capitulo_id', capituloId);
-            const resp = await fetch('capitulo_roteiros_shorts_ia.php', { method: 'POST', body: dados });
-            const json = await resp.json();
-            if (!resp.ok || !json.success) throw new Error(json.message || 'Falha ao gerar.');
+            const json = await gerarUmRoteiro();
             out.innerHTML = '<span class="text-success">' + json.message + '</span>';
             setTimeout(() => window.location.reload(), 800);
         } catch (e) {
             out.innerHTML = '<span class="text-danger">' + e.message + '</span>';
             this.disabled = false;
+        }
+    });
+}
+
+const btnGerarTodos = document.getElementById('btnGerarTodos');
+if (btnGerarTodos) {
+    btnGerarTodos.addEventListener('click', async function () {
+        const out = document.getElementById('resultadoGerarRoteiros');
+        const total = <?= count($tiposCanonicosChaves) - count($tiposUsados) ?>;
+        this.disabled = true;
+        if (btnGerar) btnGerar.disabled = true;
+
+        let feitos = 0;
+        try {
+            for (feitos = 0; feitos < total; feitos++) {
+                out.innerHTML = '<span class="text-secondary">Gerando roteiro '
+                    + (feitos + 1) + ' de ' + total + '... (~40-50s cada, não feche a página)</span>';
+                await gerarUmRoteiro();
+            }
+            out.innerHTML = '<span class="text-success">' + total + ' roteiro(s) gerado(s) com sucesso.</span>';
+            setTimeout(() => window.location.reload(), 800);
+        } catch (e) {
+            out.innerHTML = '<span class="text-danger">Gerou ' + feitos + ' de ' + total
+                + ' antes de falhar: ' + e.message + ' (os que já foram gerados foram salvos)</span>';
+            this.disabled = false;
+            if (btnGerar) btnGerar.disabled = false;
         }
     });
 }

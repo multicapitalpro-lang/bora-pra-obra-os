@@ -1,5 +1,16 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (11)
+
+- **"Gerar os N restantes de uma vez"**: novo botão no passo 3 do
+  Guia de Produção. Usuário pediu pra não precisar clicar em "gerar
+  roteiro" um por um. Por baixo dos panos continua sendo 1 chamada de
+  IA por vez, em sequência (~40-50s cada) — é isso que evita o erro
+  504 de antes, quando tentávamos gerar vários roteiros numa chamada
+  só. Do lado do usuário vira só um clique; a tela mostra o progresso
+  ("Gerando 2 de 4...") e recarrega no final. Se uma chamada falhar
+  no meio, os roteiros já gerados continuam salvos.
+
 ## [Não versionado] - 2026-09-14 (10)
 
 - **fix: contexto desconectado do gancho + fechamento repetindo a
