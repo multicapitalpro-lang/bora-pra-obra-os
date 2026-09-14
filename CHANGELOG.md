@@ -1,5 +1,26 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (8)
+
+- **fix: roteiro de Short saía formal demais e com anotações de
+  edição misturadas na narração.** Usuário reportou: texto sem
+  conexão, parecia relatório escrito, e tinha trechos tipo "(usar
+  trecho gravado: ...)" dentro do que deveria ser só a fala. Causa:
+  o prompt não proibia esse tipo de anotação dentro dos campos de
+  narração, e não dava exemplo do tom certo. Reescrito
+  `gerarRoteirosShorts()`:
+  - Seção nova "TOM E ESTILO" com exemplo real ERRADO (o que a IA
+    tinha gerado) vs CERTO (reescrito), ensinando frases curtas,
+    primeira pessoa, conectivos de fala em vez de texto escrito.
+  - Regra explícita: gancho/contexto/narração/fechamento só podem
+    ter o texto falado, nunca anotação de edição entre parênteses —
+    isso agora vai só no campo "broll".
+  - Modelo de fluxo específico pra cada um dos 5 tipos (problema,
+    custo, como_fizemos, erro, resultado), baseado no documento de
+    template oficial do projeto.
+  Testado no capítulo #1: novo roteiro (tipo "resultado") saiu sem
+  nenhuma anotação de edição misturada e com tom bem mais direto.
+
 ## [Não versionado] - 2026-09-14 (7)
 
 - `guia_producao.php` passo 1: agora tem o botão **"Enviar N bruto(s)

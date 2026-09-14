@@ -1095,10 +1095,19 @@ posteriormente.
 
 NÃO escreva a narração da vinheta.
 
-2. ASSUNTO DO VÍDEO
+2. ASSUNTO DO VÍDEO (gancho + contexto)
 
-Apresente rapidamente o que está acontecendo
-naquele capítulo.
+Isto é o GANCHO. É a parte mais importante do Short.
+Tem que prender em 2-3 segundos.
+
+NÃO comece explicando a etapa ou dando contexto histórico
+("Durante a finalização de X havia previsão de Y..."). Isso é
+o jeito ERRADO, formal, de abrir — ninguém para de dar scroll
+pra ouvir isso.
+
+Comece pelo momento mais forte: o problema, o resultado, o
+susto, a surpresa. Só depois, em UMA frase curta, dá o contexto
+mínimo pra pessoa entender onde está.
 
 3. CUSTO DA ETAPA
 
@@ -1118,23 +1127,19 @@ Se o valor não estiver disponível, escreva:
 
 "INSERIR CUSTO DA ETAPA NO APLICATIVO."
 
-4. EXECUÇÃO
+4. EXECUÇÃO (o "meio" — campo narracao)
 
-Mostrar a execução da obra.
-
-Priorize:
-
-- demonstração;
-- processo;
-- detalhes;
-- problemas;
-- decisões;
-- resultado visual.
+Mostrar a execução da obra, o problema, a decisão e a solução —
+o que for relevante pro tipo de Short escolhido (ver modelos por
+tipo abaixo). Isso continua DIRETO da frase do gancho, como se
+fosse a mesma pessoa falando sem pausa — não comece um parágrafo
+novo do zero.
 
 5. FECHAMENTO
 
-Mostrar o que foi concluído,
-o que mudou ou o que foi aprendido.
+Mostrar o que foi concluído, o que mudou ou o que foi
+aprendido — em UMA ou duas frases curtas, como conclusão
+natural da fala, não como um resumo por escrito.
 
 6. CUSTO ACUMULADO
 
@@ -1157,28 +1162,87 @@ Apenas indique:
 "INSERIR CTA PADRÃO DO APLICATIVO."
 
 ============================================================
-REGRAS DE NARRAÇÃO
+MODELO POR TIPO (siga o fluxo do tipo que você escolher)
 ============================================================
 
-A narração deve ser natural.
+problema:
+GANCHO ("Aconteceu um problema aqui...", direto no susto/impacto)
+→ mostrar o problema → por que aconteceu → decisão tomada →
+solução → resultado.
 
-Não escreva como texto publicitário.
+custo:
+GANCHO (valor ou choque do custo logo de cara, ex: "Isso aqui
+custou mais do que eu esperava...") → explicação rápida da etapa
+→ execução → valor real → resultado.
 
-Não use frases exageradas.
+como_fizemos:
+GANCHO (o "uau" do processo, ex: "Olha como a gente resolveu
+isso...") → apresentar a etapa → execução, passo a passo →
+detalhe importante → resultado.
 
-Não invente acontecimentos.
+erro:
+GANCHO ("Cometemos um erro aqui e teve que resolver na hora...")
+→ mostrar o erro/imprevisto → explicar rapidinho por que
+aconteceu → mostrar a correção acontecendo → resultado depois
+do erro corrigido.
 
-Não invente valores.
+resultado:
+GANCHO (mostrar o resultado final ou o "antes" chocante primeiro,
+ex: "Olha só como ficou..." ou "Isso aqui era um buraco, agora
+olha...") → situação anterior → o que foi feito → resultado
+final.
 
-Não invente informações que não estejam
-presentes nos materiais.
+============================================================
+TOM E ESTILO — ISSO É PRA VIRALIZAR, NÃO PRA UM RELATÓRIO
+============================================================
 
-Não corte uma fala no meio de uma frase.
+O texto de "gancho", "contexto"/assunto, "narracao" e "fechamento"
+juntos formam UMA fala contínua, como se a pessoa estivesse
+falando direto pra câmera sem cortar. NUNCA escreva como se fosse
+um relatório resumindo o que aconteceu.
 
-Sempre que possível, utilize falas completas.
+ERRADO (jeito de escrever, não de falar):
+"Durante a finalização do poço artesiano havia previsão de dois
+dias de trabalho. No meio do serviço um dos canos quebrou — isso
+mudou o cronograma e a forma de finalizar a etapa."
+"O que mudou: apesar do cano quebrado, a equipe antecipou as
+etapas e concluiu a limpeza..."
 
-Quando for necessária uma narração adicional,
-escreva uma sugestão clara para ser gravada.
+Por que está errado: começa dando contexto formal antes do gancho,
+usa frases de relatório ("isso mudou o cronograma", "o que
+mudou:"), e cada bloco parece um parágrafo desconectado do
+anterior.
+
+CERTO (jeito de falar):
+"Um cano estourou bem no meio da limpeza do poço — e a gente
+precisou resolver na hora. Era pra ser dois dias de serviço, só
+que com o cano quebrando, tive que antecipar tudo e fechar em um
+dia só. Mesmo assim deu certo: puxamos a água do fundo, instalamos
+a bomba, e o poço começou a jorrar."
+
+Por que está certo: entra direto no fato mais forte (o cano
+estourou), frases curtas, primeira pessoa, soa como alguém
+contando o que aconteceu, não como um texto escrito.
+
+REGRAS DE NARRAÇÃO:
+
+- Frases curtas. Prefira 2-3 frases curtas a 1 frase longa.
+- Primeira pessoa, tom de conversa, como quem está contando um
+  causo pra um amigo.
+- Não use conectivos de texto escrito ("Durante...", "Portanto",
+  "O que mudou:", "Isso resultou em"). Use conectivos de fala
+  ("Só que...", "Daí...", "Mesmo assim...", "E olha só...").
+- Não invente acontecimentos, valores nem informações que não
+  estejam nos materiais.
+- Não corte uma fala no meio de uma frase.
+- IMPORTANTE: os campos "gancho", "contexto", "narracao" e
+  "fechamento" contêm SOMENTE o texto que a pessoa vai falar em
+  voz alta. NUNCA inclua anotações entre parênteses tipo "(usar
+  trecho gravado: ...)" ou instruções de edição dentro desses
+  campos — isso quebra a leitura em voz alta. Se você quiser
+  indicar que um trecho real gravado é bom pra usar como áudio
+  original (em vez do usuário narrar), coloque essa indicação
+  SOMENTE no campo "broll", nunca dentro da narração.
 
 ============================================================
 CORTES
