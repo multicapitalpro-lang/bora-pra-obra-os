@@ -19,7 +19,10 @@ $capitulos = $pdo->query(
         c.id, c.numero, c.titulo,
         COUNT(a.id) AS total_arquivos,
         SUM(a.ia_transcricao IS NOT NULL AND a.ia_transcricao <> \'\') AS total_transcritos,
-        SUM(tr.decisao IS NOT NULL) AS total_triados
+        SUM(tr.decisao IS NOT NULL) AS total_triados,
+        SUM(a.ia_status = \'nao_analisado\') AS total_pendente,
+        SUM(a.ia_status IN (\'na_fila\', \'processando\')) AS total_em_fila,
+        SUM(a.ia_status = \'erro\') AS total_erro
     FROM capitulos c
     LEFT JOIN capitulo_arquivos a ON a.capitulo_id = c.id AND a.ativo = 1
     LEFT JOIN capitulo_triagem tr ON tr.arquivo_id = a.id
@@ -50,6 +53,9 @@ if (!$capituloAtual) {
 $totalArquivos = (int) $capituloAtual['total_arquivos'];
 $totalTranscritos = (int) $capituloAtual['total_transcritos'];
 $totalTriados = (int) $capituloAtual['total_triados'];
+$totalPendente = (int) $capituloAtual['total_pendente'];
+$totalEmFila = (int) $capituloAtual['total_em_fila'];
+$totalErro = (int) $capituloAtual['total_erro'];
 
 /*
 |--------------------------------------------------------------------------
@@ -228,21 +234,41 @@ require __DIR__ . '/includes/header.php';
 
     <?php if ($totalArquivos === 0): ?>
         <div class="alert alert-secondary small mb-0">Este capítulo ainda não tem arquivos sincronizados do Drive.</div>
-    <?php elseif ($totalTranscritos === 0): ?>
-        <div class="alert alert-warning small mb-0">
-            Nenhum bruto transcrito ainda. Abra o worker no seu PC
-            (<code>C:\bora-pra-obra-worker\INICIAR BORA PRA OBRA IA.bat</code>) e deixe rodando —
-            ele transcreve os brutos sozinho. Volte aqui quando aparecer algum transcrito.
-        </div>
-    <?php elseif ($passo1Parcial): ?>
-        <div class="alert alert-info small mb-0">
-            <?= $totalTranscritos ?> de <?= $totalArquivos ?> brutos já transcritos — dá pra continuar,
-            o worker vai completando o resto em segundo plano.
-        </div>
     <?php else: ?>
-        <div class="alert alert-success small mb-0">
-            Todos os <?= $totalArquivos ?> brutos já estão transcritos.
-        </div>
+
+        <?php if ($totalTranscritos === 0): ?>
+            <div class="alert alert-warning small mb-2">Nenhum bruto transcrito ainda.</div>
+        <?php elseif ($passo1Parcial): ?>
+            <div class="alert alert-info small mb-2">
+                <?= $totalTranscritos ?> de <?= $totalArquivos ?> brutos já transcritos — dá pra continuar,
+                o resto completa em segundo plano.
+            </div>
+        <?php else: ?>
+            <div class="alert alert-success small mb-2">Todos os <?= $totalArquivos ?> brutos já estão transcritos.</div>
+        <?php endif; ?>
+
+        <?php if ($totalPendente > 0): ?>
+            <button class="btn btn-sm btn-outline-dark mb-2" id="btnEnfileirar" data-capitulo-id="<?= $capituloId ?>">
+                <i class="bi bi-cloud-arrow-up"></i> Enviar <?= $totalPendente ?> bruto(s) pra fila de transcrição
+            </button>
+            <div id="resultadoEnfileirar" class="small mb-2"></div>
+        <?php endif; ?>
+
+        <?php if ($totalEmFila > 0 || $totalPendente > 0): ?>
+            <div class="small text-secondary mb-0">
+                <?php if ($totalEmFila > 0): ?>
+                    <?= $totalEmFila ?> na fila aguardando o worker processar.
+                <?php endif; ?>
+                Abra o worker no seu PC
+                (<code>C:\bora-pra-obra-worker\INICIAR BORA PRA OBRA IA.bat</code>) e deixe rodando —
+                ele processa a fila sozinho, de todos os capítulos.
+            </div>
+        <?php endif; ?>
+
+        <?php if ($totalErro > 0): ?>
+            <div class="small text-danger mt-1"><?= $totalErro ?> bruto(s) com erro no processamento anterior.</div>
+        <?php endif; ?>
+
     <?php endif; ?>
 </div>
 
@@ -413,6 +439,27 @@ require __DIR__ . '/includes/header.php';
 <script>
 const capituloId = <?= $capituloId ?>;
 const shortId = <?= $shortId ?: 'null' ?>;
+
+const btnEnfileirar = document.getElementById('btnEnfileirar');
+if (btnEnfileirar) {
+    btnEnfileirar.addEventListener('click', async function () {
+        const out = document.getElementById('resultadoEnfileirar');
+        this.disabled = true;
+        out.innerHTML = '<span class="text-secondary">Colocando na fila...</span>';
+        const dados = new FormData();
+        dados.append('capitulo_id', capituloId);
+        try {
+            const resp = await fetch('triagem_ia_solicitar.php', { method: 'POST', body: dados });
+            const json = await resp.json();
+            if (!resp.ok || !json.success) throw new Error(json.message || 'Falha ao enfileirar.');
+            out.innerHTML = '<span class="text-success">' + json.message + ' Deixe o worker rodando pra processar.</span>';
+            setTimeout(() => window.location.reload(), 1200);
+        } catch (e) {
+            out.innerHTML = '<span class="text-danger">' + e.message + '</span>';
+            this.disabled = false;
+        }
+    });
+}
 
 const btnGerar = document.getElementById('btnGerarRoteiros');
 if (btnGerar) {

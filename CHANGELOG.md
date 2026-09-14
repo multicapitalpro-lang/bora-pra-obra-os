@@ -1,5 +1,15 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (7)
+
+- `guia_producao.php` passo 1: agora tem o botão **"Enviar N bruto(s)
+  pra fila de transcrição"** direto na tela (chama
+  `triagem_ia_solicitar.php`), em vez de precisar abrir
+  `capitulo_detalhes.php` pra achar esse botão. Também mostra quantos
+  brutos estão na fila esperando o worker e quantos deram erro no
+  processamento anterior. Só #1 e #4 tinham brutos enfileirados até
+  agora -- os outros 118 capítulos nunca tinham sido enviados.
+
 ## [Não versionado] - 2026-09-14 (6)
 
 - **Shorts travados nos 5 tipos fixos do template oficial**: seguindo
