@@ -1,5 +1,24 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (4)
+
+- **fix: 504 (timeout) ao gerar roteiros de Shorts em capítulos grandes.**
+  Em produção, gerar o lote de 1-5 roteiros de uma vez em capítulos com
+  muitos brutos (ex.: 46 arquivos) estourava o timeout do servidor —
+  a IA levava 70s+ escrevendo todos os campos de vários roteiros
+  numa chamada só. Mudança: `gerarRoteirosShorts()` agora gera **1
+  roteiro por chamada** (a melhor oportunidade ainda não coberta,
+  recebendo a lista dos ângulos já usados no capítulo pra não
+  repetir); `capitulo_roteiros_shorts_ia.php` não apaga mais os
+  roteiros existentes a cada clique — soma um novo, até o limite de 5
+  por capítulo. Também reduzido o material enviado à IA (antes: todos
+  os brutos do capítulo; agora: os 10 melhores por decisão de
+  triagem/importância) pra manter a chamada mais leve. Testado com o
+  capítulo #4 (46 arquivos, o que gerou o 504 original): agora
+  responde em ~50s por roteiro, sem apagar os já gerados.
+  Textos dos botões/confirmação ajustados pra refletir "um roteiro
+  por vez".
+
 ## [Não versionado] - 2026-09-14 (3)
 
 - **`guia_producao.php`** (novo, no menu como "Guia de Produção"): uma

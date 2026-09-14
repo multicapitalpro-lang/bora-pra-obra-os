@@ -304,9 +304,39 @@ try {
 
             AND a.ativo = 1
 
+            AND (tr.decisao IS NULL OR tr.decisao IN (\'usar\', \'parcial\'))
+
         ORDER BY
+
+            /*
+            | Capítulos com muitos brutos (30-40+) deixam a chamada
+            | pra OpenAI lenta o suficiente pra estourar o timeout do
+            | servidor (504). Priorizamos os melhores arquivos e
+            | limitamos a quantidade abaixo em vez de mandar tudo.
+            | Arquivo sem transcrição não ajuda em nada a IA, então
+            | nunca deve tomar a vaga de um que tem.
+            */
+
+            (a.ia_transcricao IS NOT NULL AND a.ia_transcricao <> \'\') DESC,
+
+            CASE tr.decisao
+                WHEN \'usar\' THEN 0
+                WHEN \'parcial\' THEN 1
+                ELSE 2
+            END,
+
+            CASE tr.importancia
+                WHEN \'essencial\' THEN 0
+                WHEN \'forte\' THEN 1
+                WHEN \'boa\' THEN 2
+                WHEN \'normal\' THEN 3
+                ELSE 4
+            END,
+
             a.ordem ASC,
             a.id ASC
+
+        LIMIT 10
         ';
 
 
@@ -490,6 +520,51 @@ try {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | ROTEIROS JÁ EXISTENTES (limite e não repetir ângulo)
+    |--------------------------------------------------------------------------
+    |
+    | Cada chamada gera só 1 Short (ver comentário em
+    | OpenAIService::gerarRoteirosShorts) -- chamadas grandes demais
+    | (varios roteiros de uma vez) estouravam o timeout do servidor
+    | (504) em capitulos com muitos brutos.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    $stmtExistentes =
+        $pdo->prepare(
+            'SELECT titulo, tema FROM capitulo_short_roteiros WHERE capitulo_id = ?'
+        );
+
+    $stmtExistentes->execute([$capituloId]);
+
+    $roteirosExistentes =
+        $stmtExistentes->fetchAll(PDO::FETCH_ASSOC);
+
+    if (count($roteirosExistentes) >= 5) {
+
+        throw new RuntimeException(
+            'Este capítulo já tem 5 roteiros de Shorts (o limite recomendado). '
+            . 'Use os roteiros existentes ou apague algum antes de gerar outro.'
+        );
+    }
+
+    $angulosJaUsados = [];
+
+    foreach ($roteirosExistentes as $existente) {
+
+        $angulosJaUsados[] =
+            trim((string) $existente['titulo'])
+            . (
+                trim((string) ($existente['tema'] ?? '')) !== ''
+                    ? ' — ' . trim((string) $existente['tema'])
+                    : ''
+            );
+    }
+
+
     $openAI = new OpenAIService();
 
 
@@ -590,7 +665,9 @@ try {
 
             $encerramentoCapitulo,
 
-            $arquivosIA
+            $arquivosIA,
+
+            $angulosJaUsados
 
         );
 
@@ -678,28 +755,7 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | REMOVER ROTEIROS ANTERIORES
-    |--------------------------------------------------------------------------
-    */
-
-    $stmtDelete =
-        $pdo->prepare(
-            '
-            DELETE FROM capitulo_short_roteiros
-
-            WHERE capitulo_id = ?
-            '
-        );
-
-
-    $stmtDelete->execute([
-        $capituloId
-    ]);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | INSERT
+    | INSERT (soma ao que já existe -- não apaga roteiros anteriores)
     |--------------------------------------------------------------------------
     |
     | ATENÇÃO:

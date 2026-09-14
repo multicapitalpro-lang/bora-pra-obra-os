@@ -228,9 +228,12 @@ require __DIR__ . '/includes/header.php';
         <div class="passo-titulo">Gerar roteiros de Shorts</div>
     </div>
 
-    <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>">
-        <i class="bi bi-stars"></i> Gerar roteiros com IA
+    <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>" <?= count($roteiros) >= 5 ? 'disabled' : '' ?>>
+        <i class="bi bi-stars"></i> <?= $roteiros ? 'Gerar mais um roteiro' : 'Gerar primeiro roteiro' ?> com IA
     </button>
+    <?php if (count($roteiros) >= 5): ?>
+        <div class="small text-secondary mb-2">Limite de 5 roteiros por capítulo atingido.</div>
+    <?php endif; ?>
     <div id="resultadoGerarRoteiros" class="small mb-2"></div>
 
     <?php if ($roteiros): ?>

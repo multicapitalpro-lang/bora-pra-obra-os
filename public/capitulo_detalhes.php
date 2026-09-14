@@ -7139,7 +7139,7 @@ require __DIR__ . '/includes/header.php';
                 
                     <i class="bi bi-stars me-1"></i>
                 
-                    Gerar roteiros de Shorts com IA
+                    Gerar mais um roteiro de Short com IA
                 
                 </button>
 
@@ -14444,9 +14444,9 @@ document.addEventListener(
 
                 const confirmar =
                     window.confirm(
-                        'A IA vai analisar as transcrições dos vídeos deste capítulo e gerar os roteiros dos Shorts.\n\n'
+                        'A IA vai analisar as transcrições e gerar mais UM roteiro de Short (diferente dos já existentes).\n\n'
                         +
-                        'Esse processo pode levar alguns segundos.\n\n'
+                        'Clique de novo depois pra gerar outro. Leva uns 20-30 segundos.\n\n'
                         +
                         'Deseja continuar?'
                     );

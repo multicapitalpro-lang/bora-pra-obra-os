@@ -122,7 +122,18 @@ try {
             AND a.ia_transcricao <> \'\'
             AND (tr.decisao IS NULL OR tr.decisao IN (\'usar\', \'parcial\'))
 
-        ORDER BY a.ordem ASC, a.id ASC
+        ORDER BY
+
+            CASE tr.decisao
+                WHEN \'usar\' THEN 0
+                WHEN \'parcial\' THEN 1
+                ELSE 2
+            END,
+
+            a.ordem ASC,
+            a.id ASC
+
+        LIMIT 25
         '
     );
 

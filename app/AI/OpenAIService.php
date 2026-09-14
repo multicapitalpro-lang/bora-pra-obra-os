@@ -776,7 +776,8 @@ public function gerarRoteirosShorts(
     string $contextoCapitulo,
     string $desenvolvimentoCapitulo,
     string $encerramentoCapitulo,
-    array $arquivos
+    array $arquivos,
+    array $angulosJaUsados = []
 ): array {
 
     $tituloCapitulo =
@@ -991,6 +992,32 @@ public function gerarRoteirosShorts(
 
     /*
     |--------------------------------------------------------------------------
+    | ÂNGULOS JÁ USADOS (evitar repetir)
+    |--------------------------------------------------------------------------
+    */
+
+    $anguloJaUsadoTexto = '';
+
+    foreach ($angulosJaUsados as $angulo) {
+
+        $angulo = trim((string) $angulo);
+
+        if ($angulo === '') {
+            continue;
+        }
+
+        $anguloJaUsadoTexto .= "- {$angulo}\n";
+    }
+
+    if ($anguloJaUsadoTexto === '') {
+
+        $anguloJaUsadoTexto =
+            '(nenhum Short gerado ainda para este capítulo)';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | PROMPT
     |--------------------------------------------------------------------------
     */
@@ -1173,14 +1200,11 @@ Evite transformar a tela em um parágrafo.
 QUANTIDADE
 ============================================================
 
-Analise todo o material.
+Analise todo o material e gere APENAS 1 (UM) Short: a melhor
+oportunidade que você encontrar neste capítulo.
 
-Gere de 1 a 5 Shorts.
-
-Só gere vários Shorts quando existirem
-ângulos realmente diferentes.
-
-NÃO gere cinco Shorts praticamente iguais.
+Não gere mais de um. Esta função é chamada várias vezes, uma por
+Short, então gere sempre a MELHOR oportunidade ainda não coberta.
 
 ============================================================
 DURAÇÃO
@@ -1220,6 +1244,12 @@ MATERIAIS DOS VÍDEOS
 ============================================================
 
 {$materialBrutos}
+
+============================================================
+ÂNGULOS JÁ USADOS NESTE CAPÍTULO (NÃO REPETIR)
+============================================================
+
+{$anguloJaUsadoTexto}
 
 ============================================================
 RETORNO
@@ -1278,7 +1308,7 @@ PROMPT;
                     1,
 
                 'maxItems' =>
-                    5,
+                    1,
 
                 'items' => [
 
