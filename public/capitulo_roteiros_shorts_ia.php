@@ -543,25 +543,40 @@ try {
     $roteirosExistentes =
         $stmtExistentes->fetchAll(PDO::FETCH_ASSOC);
 
-    if (count($roteirosExistentes) >= 5) {
+    /*
+    | O limite "de verdade" agora é os 5 tipos fixos do template
+    | (ver OpenAIService::gerarRoteirosShorts) -- essa checagem aqui é
+    | só uma trava de segurança solta, pra não acumular lixo caso algo
+    | saia do previsto (ex.: roteiros antigos gerados antes dessa
+    | mudança, que não usam as chaves fixas de tipo).
+    */
+
+    if (count($roteirosExistentes) >= 10) {
 
         throw new RuntimeException(
-            'Este capítulo já tem 5 roteiros de Shorts (o limite recomendado). '
-            . 'Use os roteiros existentes ou apague algum antes de gerar outro.'
+            'Este capítulo já tem muitos roteiros de Shorts. '
+            . 'Use os existentes ou apague algum antes de gerar outro.'
         );
     }
+
+    /*
+    | tema guarda a chave do tipo fixo (problema/custo/como_fizemos/
+    | erro/resultado) a partir desta mudança. Roteiros antigos gerados
+    | antes dela podem ter texto livre em tema -- nesse caso
+    | simplesmente não batem com nenhum dos 5 tipos e não bloqueiam
+    | nada (aceitável: só afeta a checagem de duplicidade, não quebra
+    | a geração).
+    */
 
     $angulosJaUsados = [];
 
     foreach ($roteirosExistentes as $existente) {
 
-        $angulosJaUsados[] =
-            trim((string) $existente['titulo'])
-            . (
-                trim((string) ($existente['tema'] ?? '')) !== ''
-                    ? ' — ' . trim((string) $existente['tema'])
-                    : ''
-            );
+        $tema = trim((string) ($existente['tema'] ?? ''));
+
+        if ($tema !== '') {
+            $angulosJaUsados[] = $tema;
+        }
     }
 
 

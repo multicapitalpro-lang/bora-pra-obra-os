@@ -1,5 +1,22 @@
 # Changelog
 
+## [Não versionado] - 2026-09-14 (6)
+
+- **Shorts travados nos 5 tipos fixos do template oficial**: seguindo
+  o documento de padrão de roteiro/edição do Bora pra Obra, a IA não
+  escolhe mais um "ângulo" livre para cada Short — ela escolhe
+  obrigatoriamente entre os 5 tipos do template (`problema`, `custo`,
+  `como_fizemos`, `erro`, `resultado`), um por chamada, nunca
+  repetindo um tipo já gerado no capítulo. O campo `tema` agora guarda
+  a chave do tipo. Roteiros de Shorts gerados antes dessa mudança
+  mantêm o texto livre antigo em `tema` e não são afetados/bloqueados
+  por essa checagem. `guia_producao.php` mostra quais dos 5 tipos já
+  foram gerados e quantos faltam.
+  (Alinhamento do episódio longo — "o que vamos fazer", "problema /
+  decisão / solução", "resultado", "custo da etapa/acumulado" e "CTA"
+  como campos próprios — fica pra depois, por decisão do dono do
+  projeto: começar só pelos Shorts.)
+
 ## [Não versionado] - 2026-09-14 (5)
 
 - **fix: "roteiro pra ler" mostrava só um pedaço do Short.**

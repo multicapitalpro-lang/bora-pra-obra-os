@@ -992,27 +992,53 @@ public function gerarRoteirosShorts(
 
     /*
     |--------------------------------------------------------------------------
-    | ÂNGULOS JÁ USADOS (evitar repetir)
+    | OS 5 TIPOS FIXOS DE SHORT (template oficial do Bora pra Obra)
+    |--------------------------------------------------------------------------
+    |
+    | Não é um ângulo livre: a IA escolhe UM entre estes 5, o que
+    | ainda não foi coberto neste capítulo. $angulosJaUsados recebe as
+    | chaves (problema/custo/como_fizemos/erro/resultado) já geradas.
+    |
     |--------------------------------------------------------------------------
     */
 
-    $anguloJaUsadoTexto = '';
+    $tiposCanonicos = [
+        'problema' =>
+            'O problema — expõe um problema real que apareceu durante a etapa.',
+        'custo' =>
+            'Quanto custou — foco em revelar o valor gasto nessa etapa.',
+        'como_fizemos' =>
+            'Como fizemos — mostra o passo a passo de como a etapa foi executada.',
+        'erro' =>
+            'O erro que aconteceu — mostra um erro cometido e como foi corrigido.',
+        'resultado' =>
+            'O resultado — mostra o resultado final ou a transformação da etapa.',
+    ];
 
-    foreach ($angulosJaUsados as $angulo) {
+    $tiposRestantes =
+        array_diff(
+            array_keys($tiposCanonicos),
+            array_map('strval', $angulosJaUsados)
+        );
 
-        $angulo = trim((string) $angulo);
+    if (empty($tiposRestantes)) {
 
-        if ($angulo === '') {
-            continue;
-        }
-
-        $anguloJaUsadoTexto .= "- {$angulo}\n";
+        throw new RuntimeException(
+            'Os 5 tipos de Short do template (problema, custo, como fizemos, '
+            . 'erro, resultado) já foram gerados para este capítulo.'
+        );
     }
 
-    if ($anguloJaUsadoTexto === '') {
+    $tiposCanonicosTexto = '';
 
-        $anguloJaUsadoTexto =
-            '(nenhum Short gerado ainda para este capítulo)';
+    foreach ($tiposCanonicos as $chave => $descricao) {
+
+        $status =
+            in_array($chave, $tiposRestantes, true)
+                ? 'DISPONÍVEL'
+                : 'já usado neste capítulo, NÃO escolher de novo';
+
+        $tiposCanonicosTexto .= "- {$chave}: {$descricao} ({$status})\n";
     }
 
 
@@ -1197,14 +1223,26 @@ Os textos devem ser:
 Evite transformar a tela em um parágrafo.
 
 ============================================================
+TIPO DO SHORT (escolha OBRIGATORIAMENTE um destes 5)
+============================================================
+
+O Bora pra Obra segue um template fixo de 5 tipos de Short. Não
+invente um 6º tipo. O campo "angulo" da resposta deve ser exatamente
+uma destas chaves:
+
+{$tiposCanonicosTexto}
+
+Escolha o tipo DISPONÍVEL que tiver o melhor material real neste
+capítulo. Nunca escolha um tipo já usado.
+
+============================================================
 QUANTIDADE
 ============================================================
 
-Analise todo o material e gere APENAS 1 (UM) Short: a melhor
-oportunidade que você encontrar neste capítulo.
+Gere APENAS 1 (UM) Short, do tipo escolhido acima.
 
 Não gere mais de um. Esta função é chamada várias vezes, uma por
-Short, então gere sempre a MELHOR oportunidade ainda não coberta.
+Short, até completar os 5 tipos do template.
 
 ============================================================
 DURAÇÃO
@@ -1244,12 +1282,6 @@ MATERIAIS DOS VÍDEOS
 ============================================================
 
 {$materialBrutos}
-
-============================================================
-ÂNGULOS JÁ USADOS NESTE CAPÍTULO (NÃO REPETIR)
-============================================================
-
-{$anguloJaUsadoTexto}
 
 ============================================================
 RETORNO
@@ -1325,7 +1357,8 @@ PROMPT;
                         ],
 
                         'angulo' => [
-                            'type' => 'string'
+                            'type' => 'string',
+                            'enum' => array_values($tiposRestantes),
                         ],
 
                         'gancho' => [

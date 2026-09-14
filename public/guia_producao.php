@@ -69,6 +69,19 @@ $stmtRoteiros = $pdo->prepare(
 $stmtRoteiros->execute([$capituloId]);
 $roteiros = $stmtRoteiros->fetchAll();
 
+/*
+| Os 5 tipos fixos do template oficial (ver OpenAIService::
+| gerarRoteirosShorts). tema guarda a chave de cada um; roteiros
+| gerados antes dessa mudança podem ter texto livre em tema e
+| simplesmente não contam pra essa checagem.
+*/
+$tiposCanonicosChaves = ['problema', 'custo', 'como_fizemos', 'erro', 'resultado'];
+$tiposUsados = array_intersect(
+    $tiposCanonicosChaves,
+    array_map(fn($r) => trim((string) ($r['tema'] ?? '')), $roteiros)
+);
+$todosTiposUsados = count($tiposUsados) >= count($tiposCanonicosChaves);
+
 $shortId = (int) ($_GET['short_id'] ?? 0);
 
 $shortAtual = null;
@@ -262,11 +275,16 @@ require __DIR__ . '/includes/header.php';
         </div>
     <?php endif; ?>
 
-    <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>" <?= count($roteiros) >= 5 ? 'disabled' : '' ?>>
+    <button class="btn btn-dark btn-sm mb-3" id="btnGerarRoteiros" data-capitulo-id="<?= $capituloId ?>" <?= $todosTiposUsados ? 'disabled' : '' ?>>
         <i class="bi bi-stars"></i> <?= $roteiros ? 'Gerar mais um roteiro' : 'Gerar primeiro roteiro' ?> com IA
     </button>
-    <?php if (count($roteiros) >= 5): ?>
-        <div class="small text-secondary mb-2">Limite de 5 roteiros por capítulo atingido.</div>
+    <?php if ($todosTiposUsados): ?>
+        <div class="small text-secondary mb-2">Os 5 tipos de Short do template já foram gerados neste capítulo.</div>
+    <?php else: ?>
+        <div class="small text-secondary mb-2">
+            Tipos já gerados: <?= $tiposUsados ? htmlspecialchars(implode(', ', $tiposUsados)) : 'nenhum ainda' ?>
+            (faltam <?= count($tiposCanonicosChaves) - count($tiposUsados) ?> de 5)
+        </div>
     <?php endif; ?>
     <div id="resultadoGerarRoteiros" class="small mb-2"></div>
 
