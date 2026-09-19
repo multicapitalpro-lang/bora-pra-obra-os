@@ -1,5 +1,26 @@
 # Changelog
 
+## [Não versionado] - 2026-09-19 (3)
+
+- **Acompanhar o worker sem olhar o terminal.** Usuário perguntou
+  como saber se o worker está rodando sozinho de verdade. Novo card
+  no topo do Guia de Produção, que se atualiza sozinho a cada 15s:
+  - Bolinha de status (verde = ativo agora, amarelo = visto há um
+    tempo/pode estar numa tarefa longa, cinza = não detectado) + o
+    que ele está fazendo agora (ex.: "Transcrevendo GX010060.MP4 -
+    capítulo #21").
+  - Duas barras de progresso globais: arquivos transcritos e
+    capítulos com os 5 Shorts completos.
+  - Novo endpoint `worker_heartbeat.php`: o worker avisa a cada volta
+    do loop (e antes de cada tarefa) o que está fazendo. Nova tabela
+    `worker_status` (migration 002) guarda isso.
+  - `worker.py` também reordenado: verifica Shorts pendentes a cada
+    volta do loop, não só quando as filas de transcrição ficam
+    totalmente vazias (senão um capítulo só ganhava Shorts depois de
+    TODOS os outros capítulos do projeto terminarem de transcrever).
+  - Task agendada do Windows criada (`BoraPraObraWorker`) pra abrir o
+    worker sozinho no login, sem precisar lembrar de nada.
+
 ## [Não versionado] - 2026-09-19 (2)
 
 - **Botão "Processar tudo automaticamente" no Guia de Produção**:

@@ -66,6 +66,68 @@ $totalCapitulosPendenteShorts = (int) $pdo->query(
     '
 )->fetchColumn();
 
+/*
+|--------------------------------------------------------------------------
+| STATUS DO WORKER (heartbeat) + PROGRESSO GLOBAL
+|--------------------------------------------------------------------------
+*/
+
+$workerStatus = $pdo->query(
+    '
+    SELECT
+        atividade_atual,
+        ultimo_ping_at,
+        TIMESTAMPDIFF(SECOND, ultimo_ping_at, NOW()) AS segundos_atras
+    FROM worker_status
+    WHERE id = 1
+    '
+)->fetch();
+
+$totalArquivosGlobal = 0;
+$totalTranscritosGlobal = 0;
+foreach ($capitulos as $c) {
+    $totalArquivosGlobal += (int) $c['total_arquivos'];
+    $totalTranscritosGlobal += (int) $c['total_transcritos'];
+}
+
+$totalCapitulosElegiveisShorts = (int) $pdo->query(
+    '
+    SELECT COUNT(*) FROM capitulos c
+    WHERE EXISTS (
+            SELECT 1 FROM capitulo_arquivos a
+            WHERE a.capitulo_id = c.id AND a.ativo = 1
+              AND a.ia_transcricao IS NOT NULL AND a.ia_transcricao <> \'\'
+        )
+    '
+)->fetchColumn();
+
+$totalCapitulosShortsCompletos = (int) $pdo->query(
+    '
+    SELECT COUNT(*) FROM capitulos c
+    WHERE (
+            SELECT COUNT(DISTINCT s.tema) FROM capitulo_short_roteiros s
+            WHERE s.capitulo_id = c.id
+              AND s.tema IN (\'problema\', \'custo\', \'como_fizemos\', \'erro\', \'resultado\')
+          ) >= 5
+    '
+)->fetchColumn();
+
+$segundosAtras = $workerStatus ? (int) $workerStatus['segundos_atras'] : null;
+
+if ($segundosAtras === null) {
+    $workerNivel = 'offline';
+    $workerTexto = 'Nunca visto';
+} elseif ($segundosAtras < 90) {
+    $workerNivel = 'online';
+    $workerTexto = 'Ativo agora';
+} elseif ($segundosAtras < 1200) {
+    $workerNivel = 'ocupado';
+    $workerTexto = 'Visto há ' . round($segundosAtras / 60) . ' min (pode estar numa tarefa longa)';
+} else {
+    $workerNivel = 'offline';
+    $workerTexto = 'Não detectado há ' . round($segundosAtras / 60) . ' min — provavelmente fechado';
+}
+
 $capituloId = (int) ($_GET['capitulo_id'] ?? 0);
 
 if ($capituloId <= 0 && $capitulos) {
@@ -243,6 +305,13 @@ require __DIR__ . '/includes/header.php';
         padding: 2px 6px; border-radius: 4px; line-height: 1;
     }
     .btn-excluir-roteiro:hover { color: #dc3545; background: #f8d7da; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .status-dot.online { background: #198754; box-shadow: 0 0 0 3px rgba(25,135,84,.2); }
+    .status-dot.ocupado { background: #ffc107; box-shadow: 0 0 0 3px rgba(255,193,7,.25); }
+    .status-dot.offline { background: #adb5bd; }
+    .progresso-mini { height: 8px; border-radius: 5px; background: #e9ecef; overflow: hidden; }
+    .progresso-mini > div { height: 100%; background: #111315; }
 </style>
 
 <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
@@ -262,6 +331,40 @@ require __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
         </select>
     </form>
+</div>
+
+<!-- STATUS DO WORKER + PROGRESSO GLOBAL -->
+<div class="passo mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div class="status-pill">
+            <span class="status-dot <?= $workerNivel ?>" id="workerDot"></span>
+            <span id="workerTexto">Worker: <?= htmlspecialchars($workerTexto) ?></span>
+        </div>
+        <div class="small text-secondary" id="workerAtividade">
+            <?= $workerStatus && $workerStatus['atividade_atual'] ? htmlspecialchars($workerStatus['atividade_atual']) : '—' ?>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between small mb-1">
+                <span>Transcrição dos brutos</span>
+                <span id="progTranscricaoTexto"><?= $totalTranscritosGlobal ?> / <?= $totalArquivosGlobal ?></span>
+            </div>
+            <div class="progresso-mini">
+                <div id="progTranscricaoBarra" style="width:<?= $totalArquivosGlobal > 0 ? round($totalTranscritosGlobal / $totalArquivosGlobal * 100) : 0 ?>%"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between small mb-1">
+                <span>Capítulos com os 5 Shorts completos</span>
+                <span id="progShortsTexto"><?= $totalCapitulosShortsCompletos ?> / <?= $totalCapitulosElegiveisShorts ?></span>
+            </div>
+            <div class="progresso-mini">
+                <div id="progShortsBarra" style="width:<?= $totalCapitulosElegiveisShorts > 0 ? round($totalCapitulosShortsCompletos / $totalCapitulosElegiveisShorts * 100) : 0 ?>%"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- PROCESSAR TUDO AUTOMATICAMENTE -->
@@ -518,6 +621,39 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <script>
+async function atualizarStatusWorker() {
+    try {
+        const resp = await fetch('worker_status_resumo.php');
+        const json = await resp.json();
+        if (!json.success) return;
+
+        const dot = document.getElementById('workerDot');
+        const texto = document.getElementById('workerTexto');
+        const atividade = document.getElementById('workerAtividade');
+
+        dot.className = 'status-dot ' + json.worker.nivel;
+        texto.textContent = 'Worker: ' + json.worker.texto;
+        atividade.textContent = json.worker.atividade || '—';
+
+        const pctTranscricao = json.transcricao.total > 0
+            ? Math.round(json.transcricao.concluidos / json.transcricao.total * 100) : 0;
+        document.getElementById('progTranscricaoTexto').textContent =
+            json.transcricao.concluidos + ' / ' + json.transcricao.total;
+        document.getElementById('progTranscricaoBarra').style.width = pctTranscricao + '%';
+
+        const pctShorts = json.shorts.total > 0
+            ? Math.round(json.shorts.completos / json.shorts.total * 100) : 0;
+        document.getElementById('progShortsTexto').textContent =
+            json.shorts.completos + ' / ' + json.shorts.total;
+        document.getElementById('progShortsBarra').style.width = pctShorts + '%';
+
+    } catch (e) {
+        // silencioso -- so um refresh de status, nao deve incomodar
+    }
+}
+
+setInterval(atualizarStatusWorker, 15000);
+
 const btnProcessarTudo = document.getElementById('btnProcessarTudo');
 if (btnProcessarTudo) {
     btnProcessarTudo.addEventListener('click', async function () {
