@@ -31,6 +31,41 @@ $capitulos = $pdo->query(
     '
 )->fetchAll();
 
+/*
+|--------------------------------------------------------------------------
+| RESUMO GLOBAL (pro botão "processar tudo")
+|--------------------------------------------------------------------------
+*/
+
+$totalCapitulosPendenteTranscricao = 0;
+foreach ($capitulos as $c) {
+    if ((int) $c['total_pendente'] > 0 || (int) $c['total_em_fila'] > 0) {
+        $totalCapitulosPendenteTranscricao++;
+    }
+}
+
+$totalCapitulosPendenteShorts = (int) $pdo->query(
+    '
+    SELECT COUNT(*) FROM capitulos c
+    WHERE EXISTS (SELECT 1 FROM capitulo_arquivos a WHERE a.capitulo_id = c.id AND a.ativo = 1)
+      AND NOT EXISTS (
+            SELECT 1 FROM capitulo_arquivos a
+            WHERE a.capitulo_id = c.id AND a.ativo = 1
+              AND a.ia_status IN (\'nao_analisado\', \'na_fila\', \'processando\')
+        )
+      AND EXISTS (
+            SELECT 1 FROM capitulo_arquivos a
+            WHERE a.capitulo_id = c.id AND a.ativo = 1
+              AND a.ia_transcricao IS NOT NULL AND a.ia_transcricao <> \'\'
+        )
+      AND (
+            SELECT COUNT(DISTINCT s.tema) FROM capitulo_short_roteiros s
+            WHERE s.capitulo_id = c.id
+              AND s.tema IN (\'problema\', \'custo\', \'como_fizemos\', \'erro\', \'resultado\')
+          ) < 5
+    '
+)->fetchColumn();
+
 $capituloId = (int) ($_GET['capitulo_id'] ?? 0);
 
 if ($capituloId <= 0 && $capitulos) {
@@ -227,6 +262,38 @@ require __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
         </select>
     </form>
+</div>
+
+<!-- PROCESSAR TUDO AUTOMATICAMENTE -->
+<div class="passo mb-4" style="border-color:#111315">
+    <div class="passo-cabecalho">
+        <div class="passo-numero atual"><i class="bi bi-lightning-charge-fill"></i></div>
+        <div class="passo-titulo">Processar tudo automaticamente (todos os capítulos)</div>
+    </div>
+
+    <p class="small text-secondary mb-2">
+        Um clique só, sem escolher capítulo. Gera os Shorts que faltam em qualquer capítulo já
+        transcrito, capítulo por capítulo, até não sobrar nenhum pendente.
+    </p>
+
+    <?php if ($totalCapitulosPendenteTranscricao > 0): ?>
+        <div class="alert alert-warning small mb-2">
+            <i class="bi bi-exclamation-triangle"></i>
+            <?= $totalCapitulosPendenteTranscricao ?> capítulo(s) ainda têm brutos não transcritos.
+            Isso só o <strong>worker</strong> no seu PC resolve (baixa e transcreve os vídeos) —
+            abra <code>C:\bora-pra-obra-worker\INICIAR BORA PRA OBRA IA.bat</code> e deixe rodando;
+            ele mesmo enfileira e processa qualquer capítulo pendente, sem precisar clicar em nada
+            aqui no painel.
+        </div>
+    <?php endif; ?>
+
+    <button class="btn btn-dark" id="btnProcessarTudo" <?= $totalCapitulosPendenteShorts === 0 ? 'disabled' : '' ?>>
+        <i class="bi bi-stars"></i>
+        <?= $totalCapitulosPendenteShorts > 0
+            ? "Gerar Shorts pendentes em {$totalCapitulosPendenteShorts} capítulo(s)"
+            : 'Nenhum Short pendente agora' ?>
+    </button>
+    <div id="resultadoProcessarTudo" class="small mt-2"></div>
 </div>
 
 <!-- PASSO 1 — TRANSCRIÇÃO -->
@@ -451,6 +518,48 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <script>
+const btnProcessarTudo = document.getElementById('btnProcessarTudo');
+if (btnProcessarTudo) {
+    btnProcessarTudo.addEventListener('click', async function () {
+        const out = document.getElementById('resultadoProcessarTudo');
+        this.disabled = true;
+        let gerados = 0;
+
+        try {
+            while (true) {
+                out.innerHTML = '<span class="text-secondary">Procurando o próximo capítulo pendente de Shorts'
+                    + (gerados > 0 ? ' (' + gerados + ' roteiro(s) gerado(s) até agora)' : '') + '...</span>';
+
+                const respTarefa = await fetch('capitulo_roteiros_shorts_proxima_tarefa.php', { method: 'POST' });
+                const jsonTarefa = await respTarefa.json();
+                if (!respTarefa.ok || !jsonTarefa.success) throw new Error(jsonTarefa.message || 'Falha ao buscar capítulo.');
+
+                if (!jsonTarefa.task) {
+                    out.innerHTML = '<span class="text-success">Pronto! ' + gerados
+                        + ' roteiro(s) gerado(s). Nenhum capítulo com Short pendente agora.</span>';
+                    break;
+                }
+
+                const tarefa = jsonTarefa.task;
+                out.innerHTML = '<span class="text-secondary">Gerando Short pro capítulo #'
+                    + tarefa.capitulo_numero + ' — ' + tarefa.capitulo_titulo + ' (~40-50s)...</span>';
+
+                const dados = new FormData();
+                dados.append('capitulo_id', tarefa.capitulo_id);
+                const respGerar = await fetch('capitulo_roteiros_shorts_ia.php', { method: 'POST', body: dados });
+                const jsonGerar = await respGerar.json();
+                if (!respGerar.ok || !jsonGerar.success) throw new Error(jsonGerar.message || 'Falha ao gerar roteiro.');
+
+                gerados++;
+            }
+        } catch (e) {
+            out.innerHTML = '<span class="text-danger">Parou depois de ' + gerados + ' roteiro(s): ' + e.message + '</span>';
+        } finally {
+            this.disabled = false;
+        }
+    });
+}
+
 const capituloId = <?= $capituloId ?>;
 const shortId = <?= $shortId ?: 'null' ?>;
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [Não versionado] - 2026-09-19 (2)
+
+- **Botão "Processar tudo automaticamente" no Guia de Produção**:
+  usuário queria um botão só, sem escolher capítulo, pra gerar os
+  Shorts que faltam em qualquer capítulo já transcrito. Novo card no
+  topo da página faz exatamente isso — chama o endpoint de "próximo
+  capítulo pendente" em loop (sem token de worker, usando a própria
+  sessão do painel) até não sobrar nenhum. Mostra quantos capítulos
+  ainda dependem só do worker (brutos não transcritos), já que essa
+  parte não rola pelo navegador.
+  `capitulo_roteiros_shorts_proxima_tarefa.php` agora aceita a sessão
+  do painel além do token do worker.
+- **fix**: a busca de "próximo capítulo pendente de Shorts" oferecia
+  capítulos cujos brutos foram todos processados mas nenhum tinha
+  fala (só análise visual) — geração falhava sempre nesses. Agora
+  exige pelo menos 1 bruto com transcrição real antes de considerar
+  o capítulo elegível.
+
 ## [Não versionado] - 2026-09-19
 
 - **Worker totalmente autônomo entre capítulos.** Usuário pediu pra

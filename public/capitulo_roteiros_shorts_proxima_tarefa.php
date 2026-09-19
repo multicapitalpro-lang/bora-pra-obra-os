@@ -7,6 +7,19 @@ error_reporting(E_ALL);
 
 header('Content-Type: application/json; charset=utf-8');
 
+/*
+|--------------------------------------------------------------------------
+| SESSÃO DO PAINEL COMO ALTERNATIVA (pro botão "gerar tudo" no
+| navegador chamar isso direto, sem precisar de token de worker)
+|--------------------------------------------------------------------------
+*/
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+$autenticadoComoPainel = !empty($_SESSION['admin_id']);
+
 require __DIR__ . '/config/database.php';
 
 $pdo = db();
@@ -37,22 +50,25 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | AUTENTICAÇÃO (mesma chave do worker, ver triagem_ia_proxima_tarefa.php)
+    | AUTENTICAÇÃO: sessão do painel OU chave do worker
     |--------------------------------------------------------------------------
     */
 
-    $configFile = dirname(__DIR__, 2) . '/storage/config/worker.php';
+    if (!$autenticadoComoPainel) {
 
-    if (!file_exists($configFile)) {
-        throw new RuntimeException('Configuração do worker não encontrada.');
-    }
+        $configFile = dirname(__DIR__, 2) . '/storage/config/worker.php';
 
-    $config = require $configFile;
+        if (!file_exists($configFile)) {
+            throw new RuntimeException('Configuração do worker não encontrada.');
+        }
 
-    $secretEsperado = trim((string) ($config['secret'] ?? ''));
+        $config = require $configFile;
 
-    if ($secretEsperado === '' || !hash_equals($secretEsperado, obterBearerToken())) {
-        responderWorker(['success' => false, 'message' => 'Não autorizado.'], 401);
+        $secretEsperado = trim((string) ($config['secret'] ?? ''));
+
+        if ($secretEsperado === '' || !hash_equals($secretEsperado, obterBearerToken())) {
+            responderWorker(['success' => false, 'message' => 'Não autorizado.'], 401);
+        }
     }
 
     /*
@@ -63,8 +79,11 @@ try {
     | Só considera capítulo "pronto pra Shorts" quando a transcrição
     | não tem mais nada pendente (nao_analisado / na_fila /
     | processando) -- ou seja, cada bruto já terminou em "concluido"
-    | ou "erro". Entre os prontos, escolhe o de menor número que
-    | ainda não tem os 5 tipos fixos do template gerados.
+    | ou "erro" -- E tem pelo menos um bruto com transcrição real
+    | (alguns capítulos só têm brutos silenciosos/visuais, sem fala
+    | nenhuma, e nesse caso não tem material pra narrar um Short).
+    | Entre os prontos, escolhe o de menor número que ainda não tem
+    | os 5 tipos fixos do template gerados.
     |
     |--------------------------------------------------------------------------
     */
@@ -82,6 +101,13 @@ try {
                 WHERE a.capitulo_id = c.id
                   AND a.ativo = 1
                   AND a.ia_status IN ("nao_analisado", "na_fila", "processando")
+            )
+          AND EXISTS (
+                SELECT 1 FROM capitulo_arquivos a
+                WHERE a.capitulo_id = c.id
+                  AND a.ativo = 1
+                  AND a.ia_transcricao IS NOT NULL
+                  AND a.ia_transcricao <> ""
             )
           AND (
                 SELECT COUNT(DISTINCT s.tema)
