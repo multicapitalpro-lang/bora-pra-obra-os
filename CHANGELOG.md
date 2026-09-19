@@ -1,5 +1,34 @@
 # Changelog
 
+## [Não versionado] - 2026-09-19
+
+- **Worker totalmente autônomo entre capítulos.** Usuário pediu pra
+  não precisar mais abrir cada capítulo no painel e clicar "enviar
+  pra fila" / "gerar Shorts" — queria só deixar o worker aberto e ele
+  descobrir sozinho o que falta.
+  - `triagem_ia_proxima_tarefa.php`: quando a fila "na_fila" está
+    vazia, agora enfileira sozinho o próximo capítulo (o de menor
+    número) que ainda tem brutos "nao_analisado" — antes só fazia
+    isso quando alguém clicava em "Enviar brutos pra fila" no painel.
+  - Novo endpoint `capitulo_roteiros_shorts_proxima_tarefa.php`:
+    encontra o próximo capítulo com transcrição 100% terminada
+    (nada "nao_analisado"/"na_fila"/"processando") que ainda não tem
+    os 5 tipos fixos de Short gerados.
+  - `capitulo_roteiros_shorts_ia.php` agora aceita autenticação do
+    worker (mesma chave Bearer) além da sessão do painel, pra poder
+    ser chamado pelo worker sem navegador.
+  - `worker.py`: novo 4º estágio no loop principal
+    (`pegar_tarefa_shorts` / `processar_tarefa_shorts`) — depois de
+    esvaziar as filas de triagem/timestamps/exportação, o worker
+    verifica se tem capítulo esperando Shorts e gera sozinho, um
+    tipo por vez, até completar os 5 ou não haver mais capítulo
+    pendente.
+  Resultado: basta deixar o worker aberto. Ele transcreve todos os
+  capítulos pendentes e gera os Shorts de cada um sozinho, sem
+  precisar mais navegar capítulo por capítulo no painel.
+  Testado de ponta a ponta localmente (auto-enfileiramento, descoberta
+  de capítulo pendente de Shorts e geração via auth de worker).
+
 ## [Não versionado] - 2026-09-14 (12)
 
 - **fix: bruto travado em "processando" pra sempre depois de um 504

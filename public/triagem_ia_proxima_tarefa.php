@@ -170,6 +170,62 @@ try {
 
     /*
     |--------------------------------------------------------------------------
+    | AUTO-ENFILEIRAR O PRÓXIMO CAPÍTULO PENDENTE
+    |--------------------------------------------------------------------------
+    |
+    | Antes, era preciso abrir cada capítulo no painel e clicar
+    | "Enviar brutos pra fila de transcrição" um por um. Agora, se a
+    | fila "na_fila" estiver vazia, o worker mesmo descobre o próximo
+    | capítulo (o de menor número) que ainda tem brutos
+    | "nao_analisado" e enfileira todos os arquivos dele sozinho.
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    $temNaFila =
+        (bool) $pdo->query(
+            'SELECT 1 FROM capitulo_arquivos WHERE ativo = 1 AND ia_status = "na_fila" LIMIT 1'
+        )->fetchColumn();
+
+    if (!$temNaFila) {
+
+        $proximoCapitulo =
+            $pdo->query(
+                '
+                SELECT DISTINCT ca.capitulo_id
+                FROM capitulo_arquivos ca
+                INNER JOIN capitulos c ON c.id = ca.capitulo_id
+                WHERE ca.ativo = 1
+                  AND ca.ia_status = "nao_analisado"
+                  AND ca.drive_file_id IS NOT NULL
+                  AND ca.drive_file_id <> ""
+                ORDER BY c.numero ASC
+                LIMIT 1
+                '
+            )->fetchColumn();
+
+        if ($proximoCapitulo) {
+
+            $pdo->prepare(
+                '
+                UPDATE capitulo_arquivos
+                SET
+                    ia_status = "na_fila",
+                    ia_solicitado_at = NOW(),
+                    ia_processamento_token = NULL,
+                    ia_processamento_inicio_at = NULL,
+                    ia_erro = NULL
+                WHERE capitulo_id = ?
+                  AND ativo = 1
+                  AND ia_status = "nao_analisado"
+                '
+            )->execute([(int) $proximoCapitulo]);
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | TRANSAÇÃO
     |--------------------------------------------------------------------------
     */

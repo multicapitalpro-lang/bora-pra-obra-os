@@ -34,11 +34,44 @@ register_shutdown_function(function () {
 
 /*
 |--------------------------------------------------------------------------
-| CARREGAMENTOS
+| AUTENTICAÇÃO: SESSÃO DO PAINEL OU WORKER (mesma chave Bearer usada
+| em triagem_ia_proxima_tarefa.php) -- o worker chama este endpoint
+| sozinho pra gerar os Shorts pendentes, sem sessão de navegador.
 |--------------------------------------------------------------------------
 */
 
-require __DIR__ . '/includes/auth.php';
+$autenticadoComoWorker = false;
+
+$cabecalhoAuth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+if (preg_match('/Bearer\s+(.+)/i', $cabecalhoAuth, $matchAuth)) {
+
+    $arquivoConfigWorker = dirname(__DIR__, 2) . '/storage/config/worker.php';
+
+    if (file_exists($arquivoConfigWorker)) {
+
+        $configWorker = require $arquivoConfigWorker;
+
+        $segredoWorker = trim((string) ($configWorker['secret'] ?? ''));
+
+        if ($segredoWorker !== '' && hash_equals($segredoWorker, trim((string) $matchAuth[1]))) {
+
+            $autenticadoComoWorker = true;
+        }
+    }
+}
+
+if (!$autenticadoComoWorker) {
+
+    require __DIR__ . '/includes/auth.php';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CARREGAMENTOS
+|--------------------------------------------------------------------------
+*/
 
 require __DIR__ . '/config/database.php';
 
